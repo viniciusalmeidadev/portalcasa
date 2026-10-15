@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Itens para Casa</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <!-- FontAwesome for beautiful icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex flex-col transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100">
+
+    <!-- LOADING SPINNER -->
+    <div id="loading-container" class="flex flex-col min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+        <div class="relative flex items-center justify-center">
+            <div class="w-16 h-16 border-4 border-cyan-100 border-t-cyan-600 rounded-full animate-spin dark:border-slate-800"></div>
+            <i class="fa-solid fa-house-laptop text-cyan-600 absolute text-xl"></i>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-4 uppercase tracking-wider animate-pulse">Carregando Nossa Casa...</p>
+    </div>
+
+    <!-- AUTH CONTAINER -->
+    <div id="auth-container" class="hidden min-h-screen w-full flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-6 sm:p-8 relative transition-transform duration-300">
+            <!-- Header/Logo -->
+            <div class="flex flex-col items-center mb-6">
+                <div class="bg-cyan-600 text-white p-3.5 rounded-2xl shadow-lg shadow-cyan-100 dark:shadow-none mb-3">
+                    <i class="fa-solid fa-house-laptop text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white" id="auth-title">Entre na sua conta</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="auth-subtitle">Acesse sua lista de compras de qualquer lugar</p>
+            </div>
+
+            <!-- Email/Password Form -->
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="auth-email" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="seu@email.com" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label for="auth-password" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Senha</label>
+                        <button type="button" id="btn-forgot-password" class="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300">Esqueceu a senha?</button>
+                    </div>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all">
+                </div>
+
+                <button type="submit" id="btn-auth-submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg shadow-cyan-100 dark:shadow-none transition-colors">
+                    Entrar
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden flex-grow flex flex-col w-full">
+        <!-- Header / Navbar -->
+        <header class="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-cyan-600 text-white p-2.5 rounded-2xl shadow-md shadow-cyan-200 dark:shadow-none">
+                    <i class="fa-solid fa-house-laptop text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Nossa Casa</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Lista de Compras & Organização</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <!-- User Menu -->
+                <div id="user-menu" class="hidden">
+                    <button id="btn-logout" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Sair da Conta">
+                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                    </button>
+                </div>
+                <!-- Link to Dashboard -->
+                <a href="dashboard.html" class="flex items-center space-x-2 px-3 sm:px-4 py-2.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-600 font-bold text-xs sm:text-sm dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 dark:text-cyan-400 transition-all shadow-sm" title="Visualizar Dashboard Financeiro">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="hidden xs:inline">Dashboard</span>
+                </a>
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Alternar tema escuro/claro">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+                <!-- Export/Import Data Button -->
+                <button id="btn-export-import" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Exportar/Importar Dados">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8">
+        
+        <!-- Statistics Panel -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+            <!-- Total de Itens -->
+            <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-xl sm:rounded-2xl self-start sm:self-auto shrink-0">
+                    <i class="fa-solid fa-layer-group text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5">Itens Cadastrados</p>
+                    <p id="stat-total" class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white leading-tight">0</p>
+                    <p id="stat-to-buy-summary" class="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 leading-none">0 a comprar</p>
+                </div>
+            </div>
+
+            <!-- Total Comprado -->
+            <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-xl sm:rounded-2xl self-start sm:self-auto shrink-0">
+                    <i class="fa-solid fa-circle-check text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5">Total Comprado</p>
+                    <p id="stat-total-bought-value" class="text-base sm:text-2xl font-bold text-slate-800 dark:text-white leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 leading-none">Valor adquirido</p>
+                </div>
+            </div>
+
+            <!-- Total Já Pago -->
+            <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-xl sm:rounded-2xl self-start sm:self-auto shrink-0">
+                    <i class="fa-solid fa-wallet text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5">Total Já Pago</p>
+                    <p id="stat-total-paid" class="text-base sm:text-2xl font-bold text-cyan-600 dark:text-cyan-400 leading-tight truncate">R$ 0,00</p>
+                    <p id="stat-price-monthly" class="text-[9px] sm:text-[10px] text-teal-600 dark:text-teal-400 font-extrabold mt-0.5 leading-none hidden" title="Soma do valor mensal de todas as parcelas ativas"></p>
+                </div>
+            </div>
+
+            <!-- Restante a Pagar -->
+            <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-xl sm:rounded-2xl self-start sm:self-auto shrink-0">
+                    <i class="fa-solid fa-receipt text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5">Restante a Pagar</p>
+                    <p id="stat-total-remaining" class="text-base sm:text-2xl font-bold text-rose-600 dark:text-rose-400 leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 leading-none">A comprar + parc. futuras</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seletor de Abas de Navegação - EXCLUSIVO MOBILE (lg:hidden) -->
+        <div class="flex lg:hidden mb-6 bg-slate-200/50 dark:bg-slate-800 p-1 rounded-2xl transition-colors duration-300" id="mobile-tabs">
+            <button id="tab-list" class="flex-1 py-3 text-sm font-bold rounded-xl text-cyan-600 bg-white dark:bg-slate-700 dark:text-white shadow-sm transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clipboard-list text-xs"></i>
+                <span>Lista de Itens</span>
+            </button>
+            <button id="tab-add" class="flex-1 py-3 text-sm font-semibold rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus-circle text-xs"></i>
+                <span>Cadastrar Item</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            
+            <!-- Left Side: Form to add new item (hidden on mobile by default) -->
+            <div class="lg:col-span-1 hidden lg:block" id="form-panel">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-5 flex items-center space-x-2">
+                        <i class="fa-solid fa-plus-circle text-cyan-600"></i>
+                        <span>Adicionar Novo Item</span>
+                    </h2>
+
+                    <form id="add-item-form" class="space-y-4">
+                        <div>
+                            <label for="item-name" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome do Item *</label>
+                            <input type="text" id="item-name" required placeholder="Ex: Detergente, Jogo de Cama, Air Fryer" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all">
+                        </div>
+
+                        <div class="grid grid-cols-1">
+                            <div>
+                                <label for="item-quantity" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Quantidade</label>
+                                <input type="number" id="item-quantity" min="1" value="1" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="item-category" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Categoria</label>
+                            <div class="relative">
+                                <select id="item-category" class="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all appearance-none cursor-pointer">
+                                    <option value="Alimentação">Alimentação</option>
+                                    <option value="Cozinha">Cozinha / Utensílios</option>
+                                    <option value="Limpeza">Limpeza / Higiene</option>
+                                    <option value="Banheiro">Banheiro</option>
+                                    <option value="Quarto">Quarto</option>
+                                    <option value="Sala">Sala / Decoração</option>
+                                    <option value="Eletrodomésticos">Eletrodomésticos</option>
+                                    <option value="Reforma">Reforma</option>
+                                    <!-- Futuras categorias (Desativadas/Invisíveis para implantação desligada) -->
+                                    <option value="Carro" class="hidden" style="display: none;">Carro</option>
+                                    <option value="Transporte" class="hidden" style="display: none;">Transporte</option>
+                                    <option value="Contas" class="hidden" style="display: none;">Contas</option>
+                                    <option value="Impostos" class="hidden" style="display: none;">Impostos</option>
+                                    <option value="Roupas" class="hidden" style="display: none;">Roupas</option>
+                                    <option value="Lazer" class="hidden" style="display: none;">Lazer</option>
+                                    <option value="Beleza" class="hidden" style="display: none;">Beleza</option>
+                                    <option value="Saúde" class="hidden" style="display: none;">Saúde</option>
+                                    <option value="Casamento" class="hidden" style="display: none;">Casamento</option>
+                                    <option value="Outros" selected>Outros</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-slate-500">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="item-notes" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Notas / Descrição</label>
+                            <textarea id="item-notes" rows="2" placeholder="Ex: Marca de preferência, voltagem, etc." class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all resize-none"></textarea>
+                        </div>
+
+                        <!-- Itens cadastrados entram por padrão como "A Comprar" sem campos financeiros -->
+                        <div class="p-3 bg-cyan-50/50 dark:bg-cyan-950/20 border border-cyan-100/50 dark:border-cyan-900/30 rounded-2xl text-center">
+                            <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wide">💡 Cadastro Simplificado</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">O item entrará como "A comprar". Ao marcá-lo como "Comprado" na lista, você preencherá o preço e parcelas.</p>
+                        </div>
+
+                        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3.5 px-4 rounded-2xl shadow-lg shadow-cyan-200 hover:shadow-cyan-300 dark:shadow-none transition-all duration-200 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Adicionar à Lista</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Side: Search, Filters and List of Items -->
+            <div class="lg:col-span-2 space-y-6" id="list-panel">
+                
+                <!-- Filters and Search panel -->
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300 space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center gap-4">
+                        <!-- Search -->
+                        <div class="relative flex-grow">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
+                            <input type="text" id="search-input" placeholder="Buscar por nome ou descrição..." class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all">
+                        </div>
+                        
+                        <!-- Sort select -->
+                        <div class="w-full md:w-48 relative">
+                            <select id="sort-select" class="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all appearance-none cursor-pointer">
+                                <option value="date-desc">Recentes Primeiro</option>
+                                <option value="date-asc">Antigos Primeiro</option>
+                                <option value="name-asc">Nome (A-Z)</option>
+                                <option value="name-desc">Nome (Z-A)</option>
+                                <option value="price-desc">Preço: Maior primeiro</option>
+                                <option value="price-asc">Preço: Menor primeiro</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-slate-500">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category and Status Pill Filters -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <!-- Status Filter -->
+                        <div class="flex space-x-1.5" id="status-filters">
+                            <button data-status="all" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-cyan-50 text-cyan-600 dark:bg-cyan-900/40 dark:text-cyan-400">
+                                Todos
+                            </button>
+                            <button data-status="to-buy" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                                A Comprar
+                            </button>
+                            <button data-status="bought" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                                Comprados
+                            </button>
+                        </div>
+
+                        <!-- Clear selection and stats summary -->
+                        <div class="flex items-center space-x-3">
+                            <span id="filtered-count" class="text-xs font-medium text-slate-500 dark:text-slate-400">Mostrando 0 itens</span>
+                            <button id="btn-clear-bought" class="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors hidden flex items-center space-x-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>Limpar Comprados</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category tags filter scroll (com cursor grab e suporte para quebra de linha responsiva no desktop) -->
+                    <div class="overflow-x-auto flex md:flex-wrap md:overflow-x-visible space-x-2 md:space-y-1.5 md:space-x-0 py-1 scrollbar-none cursor-grab active:cursor-grabbing select-none" id="category-filters">
+                        <button data-category="all" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-cyan-600 text-white shadow-sm md:mr-2">
+                            Todas Categorias
+                        </button>
+                        <button data-category="Alimentação" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🍎 Alimentação
+                        </button>
+                        <button data-category="Cozinha" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🍳 Cozinha
+                        </button>
+                        <button data-category="Limpeza" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🧼 Limpeza
+                        </button>
+                        <button data-category="Banheiro" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🚽 Banheiro
+                        </button>
+                        <button data-category="Quarto" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🛏️ Quarto
+                        </button>
+                        <button data-category="Sala" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🛋️ Sala
+                        </button>
+                        <button data-category="Eletrodomésticos" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🔌 Eletrodomésticos
+                        </button>
+                        <button data-category="Reforma" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            🔨 Reforma
+                        </button>
+                        <!-- Futuras categorias (Desativadas/Invisíveis para implantação desligada) -->
+                        <button data-category="Carro" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            🚗 Carro
+                        </button>
+                        <button data-category="Transporte" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            🚌 Transporte
+                        </button>
+                        <button data-category="Contas" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            💵 Contas
+                        </button>
+                        <button data-category="Impostos" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            🧾 Impostos
+                        </button>
+                        <button data-category="Roupas" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            👕 Roupas
+                        </button>
+                        <button data-category="Lazer" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            🍿 Lazer
+                        </button>
+                        <button data-category="Beleza" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            💄 Beleza
+                        </button>
+                        <button data-category="Saúde" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            🩺 Saúde
+                        </button>
+                        <button data-category="Casamento" class="hidden px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="display: none;">
+                            💍 Casamento
+                        </button>
+                        <button data-category="Outros" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200/80 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                            📦 Outros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Items Container -->
+                <div id="items-list-container" class="space-y-3">
+                    <!-- Javascript will render items here -->
+                    <!-- Empty State skeleton while loading or if list is empty -->
+                    <div id="empty-state" class="bg-white rounded-3xl p-12 border border-slate-100 shadow-sm text-center dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                        <div class="inline-flex p-4 bg-cyan-50 text-cyan-500 rounded-3xl mb-4 dark:bg-cyan-900/30 dark:text-cyan-400">
+                            <i class="fa-solid fa-clipboard-list text-3xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Sua lista está vazia</h3>
+                        <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto text-sm">Adicione novos itens usando o formulário ao lado para começar a planejar e gerenciar suas compras de casa.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300 text-center">
+        <div class="max-w-6xl mx-auto px-4 text-slate-500 dark:text-slate-400 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© <span id="current-year"></span> Lista de Compras para a casinha de Bruna e Vinícius. Feito com amor.</p>
+            <div class="flex space-x-4">
+                <span class="text-xs text-slate-400">Organização Inteligente para o seu Lar</span>
+            </div>
+        </div>
+    </footer>
+    </div> <!-- End app-container -->
+
+    <!-- EDIT MODAL -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300 animate-fade-in">
+        <div class="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-5 sm:p-6 relative transform scale-95 transition-transform duration-300 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <button id="close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-5 flex items-center space-x-2">
+                <i class="fa-solid fa-pen-to-square text-cyan-600"></i>
+                <span>Editar Item da Lista</span>
+            </h2>
+
+            <form id="edit-item-form" class="space-y-4">
+                <input type="hidden" id="edit-item-id">
+                
+                <div>
+                    <label for="edit-item-name" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Nome do Item *</label>
+                    <input type="text" id="edit-item-name" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label for="edit-item-quantity" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Quantidade</label>
+                        <input type="number" id="edit-item-quantity" min="1" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                    </div>
+                    <div>
+                        <label for="edit-item-price" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Preço Est. (R$)</label>
+                        <input type="number" id="edit-item-price" step="0.01" min="0.01" placeholder="0,00" title="Marque como comprado para informar o preço" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    </div>
+                </div>
+
+                <!-- Data de Compra no Modal de Edição (Exibida e obrigatória para qualquer item comprado) -->
+                <div id="edit-purchase-date-container" class="hidden">
+                    <label for="edit-item-purchase-date" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Data de Compra *</label>
+                    <input type="date" id="edit-item-purchase-date" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                </div>
+
+                <!-- Opção de Parcelamento no Modal de Edição -->
+                <div id="edit-installment-section" class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 transition-opacity" title="Marque como comprado para informar o parcelamento">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-item-is-installment" class="w-4 h-4 text-cyan-600 bg-white rounded border-slate-200 focus:ring-cyan-500 dark:bg-slate-700 dark:border-slate-600 cursor-pointer disabled:cursor-not-allowed">
+                        <label for="edit-item-is-installment" class="text-xs font-bold text-slate-600 dark:text-slate-300 select-none cursor-pointer">Este item é parcelado / mensalidade</label>
+                    </div>
+                    
+                    <!-- Contêiner de Detalhes do Parcelamento no Modal -->
+                    <div id="edit-installment-fields-container" class="hidden space-y-2.5 pt-1 animate-fade-in">
+                        <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+                            <div>
+                                <label for="edit-item-installments-total" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Parcelas</label>
+                                <input type="number" id="edit-item-installments-total" min="1" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                            <div>
+                                <label for="edit-item-installment-closing-day" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase" title="Dia de Fechamento da Fatura">Fechamento</label>
+                                <input type="number" id="edit-item-installment-closing-day" min="1" max="31" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                            <div>
+                                <label for="edit-item-installment-due-day" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Vencimento</label>
+                                <input type="number" id="edit-item-installment-due-day" min="1" max="31" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">Cálculos baseados na melhor data de compra (fechamento) e vencimento da fatura.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="edit-item-category" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Categoria</label>
+                    <div class="relative">
+                        <select id="edit-item-category" class="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all appearance-none cursor-pointer">
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Cozinha">Cozinha / Utensílios</option>
+                            <option value="Limpeza">Limpeza / Higiene</option>
+                            <option value="Banheiro">Banheiro</option>
+                            <option value="Quarto">Quarto</option>
+                            <option value="Sala">Sala / Decoração</option>
+                            <option value="Eletrodomésticos">Eletrodomésticos</option>
+                            <option value="Reforma">Reforma</option>
+                            <!-- Futuras categorias (Desativadas/Invisíveis para implantação desligada) -->
+                            <option value="Carro" class="hidden" style="display: none;">Carro</option>
+                            <option value="Transporte" class="hidden" style="display: none;">Transporte</option>
+                            <option value="Contas" class="hidden" style="display: none;">Contas</option>
+                            <option value="Impostos" class="hidden" style="display: none;">Impostos</option>
+                            <option value="Roupas" class="hidden" style="display: none;">Roupas</option>
+                            <option value="Lazer" class="hidden" style="display: none;">Lazer</option>
+                            <option value="Beleza" class="hidden" style="display: none;">Beleza</option>
+                            <option value="Saúde" class="hidden" style="display: none;">Saúde</option>
+                            <option value="Casamento" class="hidden" style="display: none;">Casamento</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-slate-500">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="edit-item-notes" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Notas / Descrição</label>
+                    <textarea id="edit-item-notes" rows="2" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-2">
+                    <input type="checkbox" id="edit-item-bought" class="w-5 h-5 text-cyan-600 bg-slate-50 rounded-lg border-slate-200 focus:ring-cyan-500 dark:bg-slate-700 dark:border-slate-600">
+                    <label for="edit-item-bought" class="text-sm font-medium text-slate-600 dark:text-slate-300 select-none cursor-pointer">Marcar como Comprado</label>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="btn-cancel-edit" class="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-2xl dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg shadow-cyan-200 dark:shadow-none transition-colors">
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EXPORT/IMPORT MODAL -->
+    <div id="export-import-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-5 sm:p-6 relative transform scale-95 transition-transform duration-300 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <button id="close-export-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-arrows-rotate text-cyan-600"></i>
+                <span>Backup e Sincronização</span>
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Guarde seus itens exportando para um arquivo local ou restaure sua lista a partir de um backup anterior.</p>
+
+            <div class="space-y-4">
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-700/20">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">Exportar Backup</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Baixe um arquivo contendo sua lista atual.</p>
+                    </div>
+                    <button id="btn-export-backup" class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-xl transition-colors shadow-md shadow-cyan-200 dark:shadow-none">
+                        <i class="fa-solid fa-file-export mr-1.5"></i> Exportar
+                    </button>
+                </div>
+
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-700/20">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">Importar Backup</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Escolha um arquivo de backup (.json) para restaurar sua lista.</p>
+                    
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="import-file-input" accept=".json" class="hidden">
+                        <button id="btn-trigger-file" class="flex-grow border border-slate-200 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-import"></i>
+                            <span id="import-file-label">Selecionar arquivo</span>
+                        </button>
+                        <button id="btn-import-backup" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Confirmar
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-amber-500 dark:text-amber-400 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Importar irá substituir os itens atuais!</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE COMPRA (Registrar Preço e Parcelas) -->
+    <div id="purchase-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-5 sm:p-6 relative transform scale-95 transition-transform duration-300 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center space-x-2">
+                <i class="fa-solid fa-cart-shopping text-emerald-600"></i>
+                <span>Registrar Compra do Item</span>
+            </h2>
+            <p id="purchase-item-title-desc" class="text-xs text-slate-500 dark:text-slate-400 mb-5 font-semibold">Informe os detalhes de pagamento do item selecionado.</p>
+
+            <form id="purchase-form" class="space-y-4">
+                <input type="hidden" id="purchase-item-id">
+                
+                <div>
+                    <label for="purchase-price" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Preço Unitário da Compra (R$) *</label>
+                    <input type="number" id="purchase-price" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                </div>
+
+                <!-- Data de Compra (Padrão e Obrigatório para todas as compras) -->
+                <div>
+                    <label for="purchase-date" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Data de Compra *</label>
+                    <input type="date" id="purchase-date" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                </div>
+
+                <!-- Opção de Parcelamento da Compra -->
+                <div class="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="purchase-is-installment" class="w-4 h-4 text-cyan-600 bg-white rounded border-slate-200 focus:ring-cyan-500 dark:bg-slate-700 dark:border-slate-600 cursor-pointer">
+                        <label for="purchase-is-installment" class="text-xs font-bold text-slate-600 dark:text-slate-300 select-none cursor-pointer">Esta é uma compra parcelada / mensalidade</label>
+                    </div>
+                    
+                    <!-- Campos do parcelamento (ocultos por padrão. Só aparecem se o checkbox estiver marcado) -->
+                    <div id="purchase-installment-fields-container" class="hidden space-y-2.5 pt-1 animate-fade-in">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label for="purchase-installments-total" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Parcelas</label>
+                                <input type="number" id="purchase-installments-total" min="1" value="12" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                            <div>
+                                <label for="purchase-installment-closing-day" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase" title="Dia de Fechamento da Fatura">Fechamento</label>
+                                <input type="number" id="purchase-installment-closing-day" min="1" max="31" value="28" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                            <div>
+                                <label for="purchase-installment-due-day" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Vencimento</label>
+                                <input type="number" id="purchase-installment-due-day" min="1" max="31" value="10" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">As parcelas pagas serão calculadas em tempo real com base no fechamento e vencimento da fatura.</p>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="btn-cancel-purchase" class="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-2xl dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-2xl shadow-lg shadow-emerald-200 dark:shadow-none transition-colors">
+                        Confirmar Compra
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3.5 bg-slate-900 text-white text-sm font-semibold rounded-2xl shadow-xl flex items-center space-x-3 translate-y-24 opacity-0 transition-all duration-300 z-50">
+        <span id="toast-icon" class="text-emerald-400"><i class="fa-solid fa-circle-check"></i></span>
+        <span id="toast-message">Operação realizada com sucesso!</span>
+    </div>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Core Script -->
+    <script src="app.js"></script>
+</body>
+</html>

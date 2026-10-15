@@ -1,0 +1,137 @@
+/* Custom styles and animations to complement Tailwind CSS */
+
+/* Prevent default scrollbars on category filter list */
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom transitions and animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Custom Checkbox transition */
+.checkbox-custom {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.checkbox-custom:checked {
+    animation: shrinkBounce 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes shrinkBounce {
+    0% { transform: scale(1); }
+    33% { transform: scale(0.85); }
+    100% { transform: scale(1); }
+}
+
+/* Modal animation wrapper classes */
+.modal-active {
+    opacity: 1 !important;
+}
+
+.modal-active > div {
+    transform: scale(1) !important;
+}
+
+/* Beautiful custom list item styling */
+.item-card {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Focus outline glow */
+input:focus, select:focus, textarea:focus {
+    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1) !important; /* cyan-600 with 10% opacity */
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15) !important; /* cyan-400 with 15% opacity */
+}
+
+/* =====================================================
+   TEMA ROSA (Bruna) — aplicado via classe .theme-pink no <html>
+   Sobrescreve todas as cores de destaque cyan → fuchsia
+   ===================================================== */
+
+/* Focus glow rosa */
+.theme-pink input:focus,
+.theme-pink select:focus,
+.theme-pink textarea:focus {
+    box-shadow: 0 0 0 4px rgba(192, 38, 211, 0.12) !important;
+}
+
+.theme-pink.dark input:focus,
+.theme-pink.dark select:focus,
+.theme-pink.dark textarea:focus {
+    box-shadow: 0 0 0 4px rgba(232, 121, 249, 0.18) !important;
+}
+
+/* Botões primários (bg-cyan-600 / hover:bg-cyan-700) */
+.theme-pink .bg-cyan-600   { background-color: #c026d3 !important; }
+.theme-pink .bg-cyan-700   { background-color: #a21caf !important; }
+.theme-pink .hover\:bg-cyan-600:hover { background-color: #c026d3 !important; }
+.theme-pink .hover\:bg-cyan-700:hover { background-color: #a21caf !important; }
+
+/* Sombras de botão */
+.theme-pink .shadow-cyan-100  { --tw-shadow-color: #fae8ff !important; }
+.theme-pink .shadow-cyan-200  { --tw-shadow-color: #f5d0fe !important; }
+.theme-pink .hover\:shadow-cyan-300:hover { --tw-shadow-color: #f0abfc !important; }
+
+/* Ícones e textos coloridos */
+.theme-pink .text-cyan-600  { color: #c026d3 !important; }
+.theme-pink .text-cyan-400  { color: #e879f9 !important; }
+.theme-pink .text-cyan-500  { color: #d946ef !important; }
+.theme-pink .hover\:text-cyan-600:hover { color: #c026d3 !important; }
+.theme-pink .hover\:text-cyan-700:hover { color: #a21caf !important; }
+.theme-pink .dark .hover\:text-cyan-300:hover { color: #f0abfc !important; }
+.theme-pink .dark .text-cyan-400 { color: #e879f9 !important; }
+
+/* Bordas */
+.theme-pink .border-cyan-600  { border-color: #c026d3 !important; }
+.theme-pink .focus\:border-cyan-600:focus { border-color: #c026d3 !important; }
+
+/* Fundos suaves (bg-cyan-50, bg-cyan-900/30) */
+.theme-pink .bg-cyan-50  { background-color: #fdf4ff !important; }
+.theme-pink .hover\:bg-cyan-100:hover { background-color: #fae8ff !important; }
+.theme-pink .dark .bg-cyan-900\/30 { background-color: rgba(112, 26, 117, 0.3) !important; }
+.theme-pink .dark .hover\:bg-cyan-900\/50:hover { background-color: rgba(112, 26, 117, 0.5) !important; }
+
+/* Ring de foco */
+.theme-pink .focus\:ring-cyan-500\/20:focus { --tw-ring-color: rgba(217, 70, 239, 0.2) !important; }
+
+/* Filtros de categoria ativos e botões de status ativos */
+.theme-pink .bg-cyan-600.text-white { background-color: #c026d3 !important; }
+
+/* Loading spinner */
+.theme-pink .border-t-cyan-600 { border-top-color: #c026d3 !important; }
+.theme-pink .border-cyan-100   { border-color: #fae8ff !important; }
+
+/* Teal (parcelas pagas) — mantém verde, não altera */

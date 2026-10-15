@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro Doméstico</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <!-- FontAwesome for beautiful icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex flex-col transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-cyan-600 text-white p-2.5 rounded-2xl shadow-md shadow-cyan-200 dark:shadow-none">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Nossa Casa</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Dashboard & Relatório Financeiro</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <!-- Link back to Shopping List -->
+                <a href="index.html" class="flex items-center space-x-2 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 transition-all shadow-sm" title="Voltar para a Lista de Compras">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Voltar à Lista</span>
+                </a>
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Alternar tema escuro/claro">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 sm:py-8">
+
+        <!-- Filtros do Dashboard (Filtros por Categoria e Ano - Otimizado para Responsividade) -->
+        <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5 flex-shrink-0">
+                <i class="fa-solid fa-filter text-cyan-500"></i>
+                Filtrar Relatório:
+            </span>
+            
+            <div class="flex flex-col xs:flex-row gap-3 items-stretch xs:items-center flex-grow">
+                <!-- Categoria Filter -->
+                <div class="flex items-center space-x-2 flex-grow sm:flex-grow-0">
+                    <label for="dash-filter-category" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Categoria:</label>
+                    <div class="relative flex-grow sm:flex-grow-0">
+                        <select id="dash-filter-category" class="w-full sm:w-auto pl-3 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer">
+                            <option value="all">Todas as Categorias</option>
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Cozinha">Cozinha / Utensílios</option>
+                            <option value="Limpeza">Limpeza / Higiene</option>
+                            <option value="Banheiro">Banheiro</option>
+                            <option value="Quarto">Quarto</option>
+                            <option value="Sala">Sala / Decoração</option>
+                            <option value="Eletrodomésticos">Eletrodomésticos</option>
+                            <option value="Reforma">Reforma</option>
+                            <!-- Futuras categorias (Desativadas/Invisíveis para implantação desligada) -->
+                            <option value="Carro" class="hidden" style="display: none;">Carro</option>
+                            <option value="Transporte" class="hidden" style="display: none;">Transporte</option>
+                            <option value="Contas" class="hidden" style="display: none;">Contas</option>
+                            <option value="Impostos" class="hidden" style="display: none;">Impostos</option>
+                            <option value="Roupas" class="hidden" style="display: none;">Roupas</option>
+                            <option value="Lazer" class="hidden" style="display: none;">Lazer</option>
+                            <option value="Beleza" class="hidden" style="display: none;">Beleza</option>
+                            <option value="Saúde" class="hidden" style="display: none;">Saúde</option>
+                            <option value="Casamento" class="hidden" style="display: none;">Casamento</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 dark:text-slate-500">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ano Filter -->
+                <div class="flex items-center space-x-2 flex-grow sm:flex-grow-0">
+                    <label for="dash-filter-year" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Ano da Compra:</label>
+                    <div class="relative flex-grow sm:flex-grow-0">
+                        <select id="dash-filter-year" class="w-full sm:w-auto pl-3 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer">
+                            <option value="all">Todos os Anos</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 dark:text-slate-500">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="dash-btn-reset-filters" class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center justify-center gap-1 sm:ml-auto pt-1 sm:pt-0">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Limpar Filtros</span>
+            </button>
+        </div>
+        
+        <!-- Statistics KPIs Row (Otimizado: 1 coluna em celulares muito pequenos, 2 em celulares normais, 4 em desktop, com padding compacto) -->
+        <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <!-- Total Gasto Real -->
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-3 sm:space-x-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-xl sm:rounded-2xl flex-shrink-0">
+                    <i class="fa-solid fa-check-double text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">Total Pago Real</p>
+                    <p id="dash-stat-paid" class="text-base xs:text-lg sm:text-2xl font-bold text-slate-800 dark:text-white leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[8px] xs:text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">À vista + parcelas quitadas</p>
+                </div>
+            </div>
+
+            <!-- Total Restante a Pagar -->
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-3 sm:space-x-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-xl sm:rounded-2xl flex-shrink-0">
+                    <i class="fa-solid fa-receipt text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">Restante a Pagar</p>
+                    <p id="dash-stat-remaining" class="text-base xs:text-lg sm:text-2xl font-bold text-rose-600 dark:text-rose-400 leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[8px] xs:text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">A comprar + parcelas futuras</p>
+                </div>
+            </div>
+
+            <!-- Fatura do Mês Atual -->
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-3 sm:space-x-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 rounded-xl sm:rounded-2xl flex-shrink-0">
+                    <i class="fa-solid fa-credit-card text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">Fatura Deste Mês</p>
+                    <p id="dash-stat-monthly" class="text-base xs:text-lg sm:text-2xl font-bold text-teal-600 dark:text-teal-400 leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[8px] xs:text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">Soma das parcelas ativas</p>
+                </div>
+            </div>
+
+            <!-- Custo Total Geral da Lista -->
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-3 sm:space-x-4 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="p-2 sm:p-3 bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-xl sm:rounded-2xl flex-shrink-0">
+                    <i class="fa-solid fa-wallet text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">Investimento Total</p>
+                    <p id="dash-stat-total" class="text-base xs:text-lg sm:text-2xl font-bold text-slate-800 dark:text-white leading-tight truncate">R$ 0,00</p>
+                    <p class="text-[8px] xs:text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">Valor total de todos os itens</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State if no items with prices are found -->
+        <div id="dash-empty-state" class="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm text-center dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300 hidden">
+            <div class="inline-flex p-4 bg-cyan-50 text-cyan-500 rounded-3xl mb-4 dark:bg-cyan-900/30 dark:text-cyan-400">
+                <i class="fa-solid fa-chart-line text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Sem dados financeiros para analisar</h3>
+            <p class="text-slate-500 dark:text-slate-400 max-w-md mx-auto text-sm">Vá até a sua Lista de Compras, adicione itens e marque-os como "Comprado" informando os valores correspondentes para ver a análise gráfica de despesas aqui.</p>
+            <div class="mt-6">
+                <a href="index.html" class="inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-cyan-150 transition-colors">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Ir para Lista de Compras</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Charts Grid Layout -->
+        <div id="dash-charts-container" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            
+            <!-- Left Chart Box: Budget overview (Donut) -->
+            <div class="lg:col-span-1 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 sm:mb-5 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-half-stroke text-cyan-500"></i>
+                    <span>Status do Orçamento</span>
+                </h3>
+                <div class="relative h-56 sm:h-64 flex items-center justify-center">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Balanço percentual do que já foi desembolsado e do que está provisionado para pagar futuramente.</p>
+                </div>
+            </div>
+
+            <!-- Right Chart Box: Category expenses (Bar) -->
+            <div class="lg:col-span-2 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 sm:mb-5 flex items-center gap-2">
+                    <i class="fa-solid fa-tags text-cyan-500"></i>
+                    <span>Distribuição de Gastos por Categoria</span>
+                </h3>
+                <div class="relative h-56 sm:h-64">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Full Width Chart Box: Timeline of Cashflow (Stacked Bar - Suporta Visualização Mensal, Anual e Total) -->
+            <div class="lg:col-span-3 bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-timeline text-cyan-500"></i>
+                        <span>Cronograma de Desembolso (Fluxo de Caixa)</span>
+                    </h3>
+                    
+                    <!-- Seletor de Modo de Visualização do Fluxo de Caixa -->
+                    <div class="flex bg-slate-100 dark:bg-slate-700/50 p-1 rounded-2xl w-full sm:w-auto" id="timeline-view-selector">
+                        <button data-view="monthly" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-cyan-600 text-white shadow-sm" title="Exibir fluxo mês a mês">
+                            Mensal
+                        </button>
+                        <button data-view="yearly" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all" title="Agrupar fluxo por ano civil">
+                            Anual
+                        </button>
+                        <button data-view="total" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all" title="Exibir desembolso total consolidado">
+                            Total
+                        </button>
+                    </div>
+                </div>
+                <!-- Contêiner com rolagem horizontal: ativo no mobile sempre, e no desktop quando há mais de 15 meses -->
+                <div class="overflow-x-auto scrollbar-thin pb-1" id="timeline-scroll-container">
+                    <div class="relative h-80 min-w-full" id="timeline-chart-wrapper">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-wrap justify-center gap-6 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3.5 h-3.5 bg-emerald-500 rounded-md"></span>
+                        <span>Já Pago (Compra à vista ou parcelas vencidas no mês)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3.5 h-3.5 bg-rose-500 rounded-md"></span>
+                        <span>A Pagar (Parcelas que vencerão no mês específico)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300 text-center">
+        <div class="max-w-6xl mx-auto px-4 text-slate-500 dark:text-slate-400 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© <span id="current-year"></span> Lista de Compras da casinha de Bruna e Vinícius. Feito com amor.</p>
+            <div class="flex space-x-4">
+                <span class="text-xs text-slate-400">Análise e Planejamento Inteligente do Lar</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <!-- Core Dashboard Script -->
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -40,8 +40,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = "index.html";
             } else {
                 applyUserTheme(user.email);
-                // Load synced items from LocalStorage and render charts
-                loadItems();
+                // Busca TODOS os itens da collection (de todos os usuários) no Firestore
+                firebase.firestore().collection("items").get()
+                    .then(snapshot => {
+                        const cloudItems = [];
+                        snapshot.forEach(doc => cloudItems.push(doc.data()));
+                        localStorage.setItem('household_items', JSON.stringify(cloudItems));
+                        loadItems();
+                    })
+                    .catch(err => {
+                        console.error("Erro ao buscar itens no Firestore: ", err);
+                        // Fallback: usa o cache do LocalStorage
+                        loadItems();
+                    });
             }
         });
     } else {

@@ -206,7 +206,7 @@ function initFirebase() {
 
 // Apply per-user color theme on <html> element
 // To change the e-mails, replace the values in the PINK_THEME_EMAILS array below.
-const PINK_THEME_EMAILS = ['bruna.murbach@hotmail.com'];
+const PINK_THEME_EMAILS = ['bruna.murba2343@hotmail.com'];
 //teste
 function applyUserTheme(email) {
     const html = document.documentElement;

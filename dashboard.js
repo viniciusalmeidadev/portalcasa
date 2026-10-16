@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Apply per-user color theme on <html> element
 // Must match the same list defined in app.js
-const PINK_THEME_EMAILS = ['vinicalmeidasouza721@gmail.com'];
+const PINK_THEME_EMAILS = ['bruna.murbach@hotmail.com'];
 
 function applyUserTheme(email) {
     const html = document.documentElement;

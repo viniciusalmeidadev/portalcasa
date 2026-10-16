@@ -206,7 +206,7 @@ function initFirebase() {
 
 // Apply per-user color theme on <html> element
 // To change the e-mails, replace the values in the PINK_THEME_EMAILS array below.
-const PINK_THEME_EMAILS = ['bruna.murbach@hotmail.com'];
+const PINK_THEME_EMAILS = ['vinicalmeidasouza721@gmail.com'];
 
 function applyUserTheme(email) {
     const html = document.documentElement;
@@ -222,8 +222,8 @@ function applyUserTheme(email) {
 function listenToUserItems(userId) {
     if (unsubscribeItems) unsubscribeItems();
 
+    // Lista TODOS os itens da collection, independente do usuário logado
     unsubscribeItems = db.collection("items")
-        .where("userId", "==", userId)
         .onSnapshot(snapshot => {
             const cloudItems = [];
             snapshot.forEach(doc => {
@@ -273,6 +273,11 @@ function listenToUserItems(userId) {
             renderItems();
         }, err => {
             console.error("Erro ao escutar Firestore: ", err);
+            if (err.code === 'permission-denied') {
+                showToast("Sem permissão para listar todos os itens. Ajuste as regras do Firestore.", "triangle-exclamation", "error");
+            } else {
+                showToast("Erro ao carregar os itens da nuvem.", "triangle-exclamation", "error");
+            }
         });
 }
 
@@ -348,7 +353,7 @@ function persistItem(item, isNew = false) {
         db.collection("items").doc(cleanId).set({
             ...item,
             id: cleanId,
-            userId: userId
+            userId: item.userId || userId // preserva o autor original ao editar item de outro usuário
         }).catch(err => {
             console.error("Erro ao salvar no Firestore: ", err);
             showToast("Erro ao salvar na nuvem.", "triangle-exclamation", "error");

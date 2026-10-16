@@ -111,8 +111,10 @@ input:focus, select:focus, textarea:focus {
 .theme-pink .text-cyan-500  { color: #d946ef !important; }
 .theme-pink .hover\:text-cyan-600:hover { color: #c026d3 !important; }
 .theme-pink .hover\:text-cyan-700:hover { color: #a21caf !important; }
-.theme-pink .dark .hover\:text-cyan-300:hover { color: #f0abfc !important; }
-.theme-pink .dark .text-cyan-400 { color: #e879f9 !important; }
+/* Modo escuro: .dark e .theme-pink ficam no MESMO elemento (<html>), então o seletor é .theme-pink.dark.
+   As classes do Tailwind com prefixo dark: se chamam .dark\:... */
+.theme-pink.dark .dark\:hover\:text-cyan-300:hover { color: #f0abfc !important; }
+.theme-pink.dark .dark\:text-cyan-400 { color: #e879f9 !important; }
 
 /* Bordas */
 .theme-pink .border-cyan-600  { border-color: #c026d3 !important; }
@@ -120,9 +122,14 @@ input:focus, select:focus, textarea:focus {
 
 /* Fundos suaves (bg-cyan-50, bg-cyan-900/30) */
 .theme-pink .bg-cyan-50  { background-color: #fdf4ff !important; }
+.theme-pink .bg-cyan-50\/50 { background-color: rgba(253, 244, 255, 0.5) !important; }
 .theme-pink .hover\:bg-cyan-100:hover { background-color: #fae8ff !important; }
-.theme-pink .dark .bg-cyan-900\/30 { background-color: rgba(112, 26, 117, 0.3) !important; }
-.theme-pink .dark .hover\:bg-cyan-900\/50:hover { background-color: rgba(112, 26, 117, 0.5) !important; }
+.theme-pink .border-cyan-100\/50 { border-color: rgba(250, 232, 255, 0.5) !important; }
+.theme-pink.dark .dark\:bg-cyan-900\/30 { background-color: rgba(112, 26, 117, 0.3) !important; }
+.theme-pink.dark .dark\:bg-cyan-900\/40 { background-color: rgba(112, 26, 117, 0.4) !important; }
+.theme-pink.dark .dark\:bg-cyan-950\/20 { background-color: rgba(74, 4, 78, 0.2) !important; }
+.theme-pink.dark .dark\:border-cyan-900\/30 { border-color: rgba(112, 26, 117, 0.3) !important; }
+.theme-pink.dark .dark\:hover\:bg-cyan-900\/50:hover { background-color: rgba(112, 26, 117, 0.5) !important; }
 
 /* Ring de foco */
 .theme-pink .focus\:ring-cyan-500\/20:focus { --tw-ring-color: rgba(217, 70, 239, 0.2) !important; }

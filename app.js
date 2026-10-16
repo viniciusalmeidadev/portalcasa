@@ -1,5 +1,7 @@
 // State Management
 let items = [];
+let cards = []; // Cartões cadastrados
+let unsubscribeCards = null;
 let itemBeingBoughtId = null; // ID do item que está sendo comprado no momento
 let currentStatusFilter = 'all';
 let currentCategoryFilter = 'all';
@@ -185,6 +187,7 @@ function initFirebase() {
 
             // Listen to User Collection on Firestore
             listenToUserItems(user.uid);
+            listenToCards();
         } else {
             // User Logged Out / Guest
             applyUserTheme(null);
@@ -192,12 +195,17 @@ function initFirebase() {
                 unsubscribeItems();
                 unsubscribeItems = null;
             }
+            if (unsubscribeCards) {
+                unsubscribeCards();
+                unsubscribeCards = null;
+            }
             if (userMenu) userMenu.classList.add('hidden');
             if (appContainer) appContainer.classList.add('hidden');
             if (authContainer) authContainer.classList.remove('hidden');
             if (loadingContainer) loadingContainer.classList.add('hidden');
 
             items = [];
+            cards = [];
             renderItems();
             updateDashboard();
         }
@@ -206,8 +214,8 @@ function initFirebase() {
 
 // Apply per-user color theme on <html> element
 // To change the e-mails, replace the values in the PINK_THEME_EMAILS array below.
-const PINK_THEME_EMAILS = ['bruna.murbach@hotmail.com']; 
-//teste
+const PINK_THEME_EMAILS = ['bruna.murbach@hotmail.com'];
+
 function applyUserTheme(email) {
     const html = document.documentElement;
     if (email && PINK_THEME_EMAILS.includes(email.toLowerCase())) {
@@ -280,6 +288,135 @@ function listenToUserItems(userId) {
             }
         });
 }
+
+// ─── CARTÕES ─────────────────────────────────────────────────────────────────
+
+// Escuta em tempo real a collection "cards" do Firestore
+function listenToCards() {
+    if (unsubscribeCards) unsubscribeCards();
+
+    unsubscribeCards = db.collection("cards")
+        .orderBy("name")
+        .onSnapshot(snapshot => {
+            cards = [];
+            snapshot.forEach(doc => cards.push({ id: doc.id, ...doc.data() }));
+            renderCardsList();
+            populateCardSelect();
+        }, err => {
+            console.error("Erro ao escutar cartões:", err);
+        });
+}
+
+// Salva um novo cartão no Firestore
+function persistCard(card) {
+    const ref = card.id ? db.collection("cards").doc(card.id) : db.collection("cards").doc();
+    const id = card.id || ref.id;
+    return ref.set({ ...card, id }).catch(err => {
+        console.error("Erro ao salvar cartão:", err);
+        showToast("Erro ao salvar o cartão.", "triangle-exclamation", "error");
+    });
+}
+
+// Remove um cartão do Firestore
+function deleteCard(id) {
+    db.collection("cards").doc(id).delete().catch(err => {
+        console.error("Erro ao deletar cartão:", err);
+        showToast("Erro ao remover o cartão.", "triangle-exclamation", "error");
+    });
+}
+
+// ─── MODAL DE CARTÕES ────────────────────────────────────────────────────────
+
+function showCardsModal() {
+    if (!isFirebaseActive()) {
+        showToast('Faça login para gerenciar seus cartões.', 'triangle-exclamation', 'error');
+        return;
+    }
+    renderCardsList();
+    const modal = document.getElementById('cards-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('modal-active'), 10);
+}
+
+function hideCardsModal() {
+    const modal = document.getElementById('cards-modal');
+    modal.classList.remove('modal-active');
+    // Limpa o formulário de novo cartão
+    document.getElementById('card-form-name').value = '';
+    document.getElementById('card-form-closing').value = '';
+    document.getElementById('card-form-due').value = '';
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function renderCardsList() {
+    const container = document.getElementById('cards-list');
+    if (!container) return;
+
+    if (cards.length === 0) {
+        container.innerHTML = `
+            <p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Nenhum cartão cadastrado ainda.</p>
+        `;
+        return;
+    }
+
+    container.innerHTML = cards.map(c => `
+        <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-700/40 rounded-xl px-3 py-2.5 border border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-credit-card text-cyan-500 dark:text-cyan-400 text-sm"></i>
+                <div>
+                    <p class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">${escapeHTML(c.name)}</p>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Fecha dia <span class="font-semibold">${c.closingDay}</span> · Vence dia <span class="font-semibold">${c.dueDay}</span></p>
+                </div>
+            </div>
+            <button onclick="handleDeleteCard('${c.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Remover cartão">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function handleDeleteCard(id) {
+    const card = cards.find(c => c.id === id);
+    if (!card) return;
+    if (!confirm(`Remover o cartão "${card.name}"?`)) return;
+    deleteCard(id);
+    showToast(`Cartão "${card.name}" removido.`, 'trash-can', 'info');
+}
+
+function handleSaveCard(e) {
+    e.preventDefault();
+    const name = document.getElementById('card-form-name').value.trim();
+    const closingDay = parseInt(document.getElementById('card-form-closing').value);
+    const dueDay = parseInt(document.getElementById('card-form-due').value);
+
+    if (!name || !closingDay || !dueDay) return;
+
+    persistCard({ name, closingDay, dueDay });
+    showToast(`Cartão "${name}" salvo com sucesso!`, 'credit-card', 'success');
+
+    document.getElementById('card-form-name').value = '';
+    document.getElementById('card-form-closing').value = '';
+    document.getElementById('card-form-due').value = '';
+}
+
+// Popula os <select> de cartões (modal de compra e modal de edição)
+function populateCardSelect() {
+    ['purchase-card-select', 'edit-card-select'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const currentVal = sel.value;
+        while (sel.options.length > 1) sel.remove(1);
+        cards.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.name} (fecha ${c.closingDay}, vence ${c.dueDay})`;
+            sel.appendChild(opt);
+        });
+        if (currentVal) sel.value = currentVal;
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Setup Auth Form Events
 function setupAuthEventListeners() {
@@ -681,6 +818,65 @@ function setupEventListeners() {
     if (purchaseForm) {
         purchaseForm.addEventListener('submit', handleConfirmPurchase);
     }
+
+    // Menu overflow mobile (botão "⋯")
+    const btnOverflow = document.getElementById('btn-mobile-overflow');
+    const overflowDropdown = document.getElementById('mobile-overflow-dropdown');
+    if (btnOverflow && overflowDropdown) {
+        btnOverflow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            overflowDropdown.classList.toggle('hidden');
+        });
+        // Fecha ao clicar fora
+        document.addEventListener('click', () => {
+            overflowDropdown.classList.add('hidden');
+        });
+        // Botão de export dentro do overflow mobile
+        const btnExportMobile = document.getElementById('btn-export-import-mobile');
+        if (btnExportMobile) {
+            btnExportMobile.addEventListener('click', () => {
+                overflowDropdown.classList.add('hidden');
+                showExportImportModal();
+            });
+        }
+    }
+
+    // Botão "Meus Cartões" no header
+    const btnManageCards = document.getElementById('btn-manage-cards');
+    if (btnManageCards) {
+        btnManageCards.addEventListener('click', showCardsModal);
+    }
+
+    // Modal de Cartões
+    const btnCloseCardsModal = document.getElementById('close-cards-modal');
+    if (btnCloseCardsModal) btnCloseCardsModal.addEventListener('click', hideCardsModal);
+
+    const cardForm = document.getElementById('card-form');
+    if (cardForm) cardForm.addEventListener('submit', handleSaveCard);
+
+    // Seletor de cartão no modal de compra: preenche fechamento/vencimento automaticamente
+    const cardSelect = document.getElementById('purchase-card-select');
+    if (cardSelect) {
+        cardSelect.addEventListener('change', () => {
+            const selectedCard = cards.find(c => c.id === cardSelect.value);
+            if (selectedCard) {
+                document.getElementById('purchase-installment-closing-day').value = selectedCard.closingDay;
+                document.getElementById('purchase-installment-due-day').value = selectedCard.dueDay;
+            }
+        });
+    }
+
+    // Seletor de cartão no modal de edição: preenche fechamento/vencimento automaticamente
+    const editCardSelect = document.getElementById('edit-card-select');
+    if (editCardSelect) {
+        editCardSelect.addEventListener('change', () => {
+            const selectedCard = cards.find(c => c.id === editCardSelect.value);
+            if (selectedCard) {
+                document.getElementById('edit-item-installment-closing-day').value = selectedCard.closingDay;
+                document.getElementById('edit-item-installment-due-day').value = selectedCard.dueDay;
+            }
+        });
+    }
 }
 
 // Initialize Theme
@@ -760,14 +956,28 @@ function calculateInstallmentProgress(purchaseDateStr, dueDay, closingDay, insta
     }
 
     // LÓGICA DE FATURA (FECHAMENTO E VENCIMENTO):
-    // Se a compra foi feita ANTES do dia de fechamento (purchaseDay < closingDay),
-    // a cobrança da 1ª parcela começa no PRÓPRIO mês da compra (offset = 0).
-    // Se a compra foi feita NO DIA ou APÓS o fechamento (purchaseDay >= closingDay),
-    // a cobrança da 1ª parcela só começa no MÊS SEGUINTE ao da compra (offset = 1).
+    // O modelo correto de cartão de crédito funciona assim:
+    //   1. Determinar em qual fatura a compra cai:
+    //      - Se purchaseDay < closingDay → entra na fatura do mês corrente (fechamento = mesmo mês)
+    //      - Se purchaseDay >= closingDay → já passou o fechamento, entra na fatura do mês seguinte
+    //   2. O vencimento da fatura pode ser no mesmo mês ou no seguinte ao fechamento:
+    //      - Se dueDay > closingDay → o vencimento é no mesmo mês do fechamento
+    //      - Se dueDay <= closingDay → o vencimento é no mês seguinte ao fechamento
+    //   Calculamos a data de vencimento da 1ª parcela de forma absoluta para evitar ambiguidades.
     const purchaseDay = purchaseDate.getDate();
     const parsedDueDay = parseInt(dueDay);
-    const parsedClosingDay = parseInt(closingDay || dueDay); // Fallback se fechar no mesmo dia
-    const startMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+    const parsedClosingDay = parseInt(closingDay || dueDay);
+
+    // Mês base da fatura (0 = mês da compra, 1 = mês seguinte)
+    const billingMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+
+    // Se o vencimento ocorre ANTES ou NO MESMO DIA do fechamento, ele cai no mês seguinte ao fechamento.
+    // Ex: fecha dia 30, vence dia 7 → vence em novembro (mês do fechamento + 1)
+    // Ex: fecha dia 1,  vence dia 7 → vence no mesmo mês do fechamento
+    const dueAfterClosingOffset = (parsedDueDay <= parsedClosingDay) ? 1 : 0;
+
+    // Offset total para o vencimento da 1ª parcela a partir do mês da compra
+    const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
 
     let paidInstallments = 0;
 
@@ -997,6 +1207,10 @@ function showPurchaseModal(id) {
     document.getElementById('purchase-installment-due-day').value = '10';
     document.getElementById('purchase-date').value = new Date().toISOString().split('T')[0];
 
+    // Reseta o seletor de cartão
+    const cardSel = document.getElementById('purchase-card-select');
+    if (cardSel) cardSel.value = '';
+
     // Abre o modal
     const modal = document.getElementById('purchase-modal');
     modal.classList.remove('hidden');
@@ -1106,6 +1320,10 @@ function showEditModal(id) {
         document.getElementById('edit-item-installments-total').value = isInst ? item.installmentsTotal : '12';
         document.getElementById('edit-item-installment-closing-day').value = isInst ? (item.installmentClosingDay || 28) : '28';
         document.getElementById('edit-item-installment-due-day').value = isInst ? item.installmentDueDay : '10';
+
+        // Reseta o seletor de cartão (sem pré-seleção, os valores já estão carregados acima)
+        const editCardSel = document.getElementById('edit-card-select');
+        if (editCardSel) editCardSel.value = '';
         
         // Exibe data de compra se o item estiver comprado (independente de ser parcelado ou não)
         if (item.bought) {
@@ -1329,7 +1547,15 @@ function getItemInstallmentsList(item) {
     const purchaseDay = purchaseDate.getDate();
     const parsedDueDay = parseInt(item.installmentDueDay);
     const parsedClosingDay = parseInt(item.installmentClosingDay || item.installmentDueDay);
-    const startMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+
+    // Mês base da fatura (0 = mês da compra, 1 = mês seguinte)
+    const billingMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+
+    // Se o vencimento ocorre ANTES ou NO MESMO DIA do fechamento, ele cai no mês seguinte ao fechamento.
+    const dueAfterClosingOffset = (parsedDueDay <= parsedClosingDay) ? 1 : 0;
+
+    // Offset total para o vencimento da 1ª parcela a partir do mês da compra
+    const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
     
     const installments = [];
     const itemTotalPrice = (item.price || 0) * (item.quantity || 1);

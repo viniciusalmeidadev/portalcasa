@@ -254,11 +254,26 @@ function calculateInstallmentProgress(purchaseDateStr, dueDay, closingDay, insta
         };
     }
 
-    // Regra de Fechamento da Fatura:
+    // LÓGICA DE FATURA (FECHAMENTO E VENCIMENTO):
+    // O modelo correto de cartão de crédito funciona assim:
+    //   1. Determinar em qual fatura a compra cai:
+    //      - Se purchaseDay < closingDay → entra na fatura do mês corrente (fechamento = mesmo mês)
+    //      - Se purchaseDay >= closingDay → já passou o fechamento, entra na fatura do mês seguinte
+    //   2. O vencimento da fatura pode ser no mesmo mês ou no seguinte ao fechamento:
+    //      - Se dueDay > closingDay → o vencimento é no mesmo mês do fechamento
+    //      - Se dueDay <= closingDay → o vencimento é no mês seguinte ao fechamento
     const purchaseDay = purchaseDate.getDate();
     const parsedDueDay = parseInt(dueDay);
     const parsedClosingDay = parseInt(closingDay || dueDay);
-    const startMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+
+    // Mês base da fatura (0 = mês da compra, 1 = mês seguinte)
+    const billingMonthOffset = (purchaseDay < parsedClosingDay) ? 0 : 1;
+
+    // Se o vencimento ocorre ANTES ou NO MESMO DIA do fechamento, ele cai no mês seguinte ao fechamento.
+    const dueAfterClosingOffset = (parsedDueDay <= parsedClosingDay) ? 1 : 0;
+
+    // Offset total para o vencimento da 1ª parcela a partir do mês da compra
+    const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
 
     let paidInstallments = 0;
 
@@ -616,10 +631,14 @@ function renderDashboard() {
 
         const closingDay = parseInt(item.installmentClosingDay || 28);
         const dueDay = parseInt(item.installmentDueDay || 10);
-        
-        // Verifica fechamento para determinar o mês de vencimento da primeira parcela
+
+        // Mesma lógica de offset usada em calculateInstallmentProgress:
+        // 1. Em qual fatura a compra cai (antes ou após o fechamento)
+        // 2. Se o vencimento é anterior ou igual ao fechamento, cai no mês seguinte ao fechamento
         const purchaseDay = pDate.getDate();
-        const startMonthOffset = (purchaseDay < closingDay) ? 0 : 1;
+        const billingMonthOffset = (purchaseDay < closingDay) ? 0 : 1;
+        const dueAfterClosingOffset = (dueDay <= closingDay) ? 1 : 0;
+        const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
 
         const installmentValue = Math.round((totalPrice / item.installmentsTotal) * 100) / 100;
 

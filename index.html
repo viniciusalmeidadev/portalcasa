@@ -69,38 +69,54 @@
     <div id="app-container" class="hidden flex-grow flex flex-col w-full">
         <!-- Header / Navbar -->
         <header class="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40 dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-cyan-600 text-white p-2.5 rounded-2xl shadow-md shadow-cyan-200 dark:shadow-none">
-                    <i class="fa-solid fa-house-laptop text-xl"></i>
+        <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <div class="bg-cyan-600 text-white p-2 sm:p-2.5 rounded-xl sm:rounded-2xl shadow-md shadow-cyan-200 dark:shadow-none shrink-0">
+                    <i class="fa-solid fa-house-laptop text-lg sm:text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Nossa Casa</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Lista de Compras & Organização</p>
+                    <h1 class="text-base sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">Nossa Casa</h1>
+                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Lista de Compras & Organização</p>
                 </div>
             </div>
             
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1.5 sm:space-x-3">
                 <!-- User Menu -->
                 <div id="user-menu" class="hidden">
-                    <button id="btn-logout" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Sair da Conta">
+                    <button id="btn-logout" class="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Sair da Conta">
                         <i class="fa-solid fa-right-from-bracket text-sm"></i>
                     </button>
                 </div>
+                <!-- Meus Cartões -->
+                <button id="btn-manage-cards" class="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Gerenciar Cartões">
+                    <i class="fa-solid fa-credit-card text-sm"></i>
+                </button>
                 <!-- Link to Dashboard -->
-                <a href="dashboard.html" class="flex items-center space-x-2 px-3 sm:px-4 py-2.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-600 font-bold text-xs sm:text-sm dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 dark:text-cyan-400 transition-all shadow-sm" title="Visualizar Dashboard Financeiro">
+                <a href="dashboard.html" class="flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-600 font-bold text-xs sm:text-sm dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 dark:text-cyan-400 transition-all shadow-sm" title="Visualizar Dashboard Financeiro">
                     <i class="fa-solid fa-chart-pie"></i>
-                    <span class="hidden xs:inline">Dashboard</span>
+                    <span class="hidden sm:inline">Dashboard</span>
                 </a>
                 <!-- Theme Toggle Button -->
-                <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Alternar tema escuro/claro">
+                <button id="theme-toggle" class="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Alternar tema escuro/claro">
                     <i class="fa-solid fa-moon dark:hidden"></i>
                     <i class="fa-solid fa-sun hidden dark:inline"></i>
                 </button>
-                <!-- Export/Import Data Button -->
-                <button id="btn-export-import" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Exportar/Importar Dados">
+                <!-- Export/Import Data Button — visível em sm+; no mobile fica no menu overflow -->
+                <button id="btn-export-import" class="hidden sm:block p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Exportar/Importar Dados">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
+                <!-- Menu overflow (mobile only) -->
+                <div class="relative sm:hidden" id="mobile-overflow-menu-wrapper">
+                    <button id="btn-mobile-overflow" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition-colors" title="Mais opções">
+                        <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
+                    </button>
+                    <div id="mobile-overflow-dropdown" class="hidden absolute right-0 top-full mt-1.5 w-44 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg overflow-hidden z-50">
+                        <button id="btn-export-import-mobile" class="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <i class="fa-solid fa-arrows-rotate text-slate-400 w-4 text-center"></i>
+                            <span>Backup / Importar</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -432,6 +448,20 @@
                     
                     <!-- Contêiner de Detalhes do Parcelamento no Modal -->
                     <div id="edit-installment-fields-container" class="hidden space-y-2.5 pt-1 animate-fade-in">
+
+                        <!-- Seletor de cartão -->
+                        <div>
+                            <label for="edit-card-select" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Cartão (opcional)</label>
+                            <div class="relative">
+                                <select id="edit-card-select" class="w-full pl-3 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all appearance-none cursor-pointer">
+                                    <option value="">— Selecionar cartão —</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
                             <div>
                                 <label for="edit-item-installments-total" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Parcelas</label>
@@ -446,7 +476,7 @@
                                 <input type="number" id="edit-item-installment-due-day" min="1" max="31" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
                             </div>
                         </div>
-                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">Cálculos baseados na melhor data de compra (fechamento) e vencimento da fatura.</p>
+                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">Selecione um cartão para preencher automaticamente os campos de fechamento e vencimento.</p>
                     </div>
                 </div>
 
@@ -581,6 +611,20 @@
                     
                     <!-- Campos do parcelamento (ocultos por padrão. Só aparecem se o checkbox estiver marcado) -->
                     <div id="purchase-installment-fields-container" class="hidden space-y-2.5 pt-1 animate-fade-in">
+
+                        <!-- Seletor de cartão -->
+                        <div>
+                            <label for="purchase-card-select" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Cartão (opcional)</label>
+                            <div class="relative">
+                                <select id="purchase-card-select" class="w-full pl-3 pr-8 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all appearance-none cursor-pointer">
+                                    <option value="">— Selecionar cartão —</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-2">
                             <div>
                                 <label for="purchase-installments-total" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase">Parcelas</label>
@@ -595,7 +639,7 @@
                                 <input type="number" id="purchase-installment-due-day" min="1" max="31" value="10" class="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
                             </div>
                         </div>
-                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">As parcelas pagas serão calculadas em tempo real com base no fechamento e vencimento da fatura.</p>
+                        <p class="text-[9px] text-cyan-500 dark:text-cyan-400 font-medium">Selecione um cartão para preencher automaticamente os campos de fechamento e vencimento.</p>
                     </div>
                 </div>
 
@@ -608,6 +652,55 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE GERENCIAMENTO DE CARTÕES -->
+    <div id="cards-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-5 sm:p-6 relative transform scale-95 transition-transform duration-300 max-h-[calc(100vh-2rem)] flex flex-col">
+            <button id="close-cards-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Cabeçalho fixo -->
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center space-x-2">
+                <i class="fa-solid fa-credit-card text-cyan-600"></i>
+                <span>Meus Cartões</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Cadastre seus cartões para preencher automaticamente fechamento e vencimento ao registrar uma compra parcelada.</p>
+
+            <!-- Formulário de adição (fixo no topo) -->
+            <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-700/20 mb-4 shrink-0">
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mb-3 uppercase tracking-wide">Adicionar novo cartão</p>
+                <form id="card-form" class="space-y-3">
+                    <div>
+                        <label for="card-form-name" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Nome do Cartão *</label>
+                        <input type="text" id="card-form-name" required placeholder="Ex: Nubank, Inter, Itaú" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-500 transition-all">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="card-form-closing" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide" title="Dia do mês em que a fatura fecha">Dia Fechamento *</label>
+                            <input type="number" id="card-form-closing" required min="1" max="31" placeholder="Ex: 28" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                        </div>
+                        <div>
+                            <label for="card-form-due" class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide" title="Dia do mês em que a fatura vence">Dia Vencimento *</label>
+                            <input type="number" id="card-form-due" required min="1" max="31" placeholder="Ex: 10" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-cyan-200 dark:shadow-none transition-colors flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Salvar Cartão</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de cartões com scroll próprio -->
+            <div class="shrink-0">
+                <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wide">Cartões cadastrados</p>
+            </div>
+            <div id="cards-list" class="space-y-2 overflow-y-auto max-h-48 pr-1">
+                <p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Nenhum cartão cadastrado ainda.</p>
+            </div>
         </div>
     </div>
 

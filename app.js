@@ -10,14 +10,14 @@ let currentSort = 'date-desc';
 let expandedItemIds = new Set(); // Armazena os IDs dos itens expandidos na listagem
 
 // Firebase Configuration & State Falling back to LocalStorage if not configured
-const firebaseConfig = {
-    apiKey: "AIzaSyA4zLDAI6pGrWEZU2vMdBkcCs_FS0ktEro",
-    authDomain: "itensdecasa-48b35.firebaseapp.com",
-    projectId: "itensdecasa-48b35",
-    storageBucket: "itensdecasa-48b35.firebasestorage.app",
-    messagingSenderId: "463316450450",
-    appId: "1:463316450450:web:d0a608986cfe89214e3a4b"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZGbkwQ9hPyMM9O8WY-YEccHsH3rNhaOc",
+    authDomain: "itensdecasa-e3449.firebaseapp.com",
+    projectId: "itensdecasa-e3449",
+    storageBucket: "itensdecasa-e3449.firebasestorage.app",
+    messagingSenderId: "514651769883",
+    appId: "1:514651769883:web:7a101c7035bcb6df287cbe"
+  };
 
 const isFirebaseConfigured = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" && firebaseConfig.apiKey !== "";
 let db = null;
@@ -1596,7 +1596,10 @@ function toggleItemDetails(itemId) {
     } else {
         expandedItemIds.add(itemId);
     }
-    renderItems(); // Re-renderiza para atualizar o painel e os ícones
+    // Preserva a posição de scroll da página durante a re-renderização
+    const scrollY = window.scrollY;
+    renderItems();
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
 }
 
 function renderItemDetailsContent(item, progress) {

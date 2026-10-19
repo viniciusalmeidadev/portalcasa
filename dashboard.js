@@ -5,14 +5,14 @@ let currentYearFilter = 'all';
 let currentTimelineView = 'monthly'; // Pode ser 'monthly', 'yearly', 'total'
 
 // Firebase Configuration & State (Must match app.js)
-const firebaseConfig = {
-    apiKey: "AIzaSyA4zLDAI6pGrWEZU2vMdBkcCs_FS0ktEro",
-    authDomain: "itensdecasa-48b35.firebaseapp.com",
-    projectId: "itensdecasa-48b35",
-    storageBucket: "itensdecasa-48b35.firebasestorage.app",
-    messagingSenderId: "463316450450",
-    appId: "1:463316450450:web:d0a608986cfe89214e3a4b"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZGbkwQ9hPyMM9O8WY-YEccHsH3rNhaOc",
+    authDomain: "itensdecasa-e3449.firebaseapp.com",
+    projectId: "itensdecasa-e3449",
+    storageBucket: "itensdecasa-e3449.firebasestorage.app",
+    messagingSenderId: "514651769883",
+    appId: "1:514651769883:web:7a101c7035bcb6df287cbe"
+  };
 
 const isFirebaseConfigured = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" && firebaseConfig.apiKey !== "";
 

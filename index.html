@@ -175,6 +175,29 @@
             </div>
         </div>
 
+        <!-- Lembrete amigável: itens ainda "A comprar" (possivelmente esquecidos) -->
+        <div id="forgotten-reminder" class="hidden relative mb-6 bg-amber-50 border border-amber-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 dark:bg-amber-900/10 dark:border-amber-900/30 transition-colors duration-300">
+            <button id="btn-close-forgotten" class="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Fechar lembrete" aria-label="Fechar lembrete">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+            <div class="flex items-start gap-3 pr-8">
+                <div class="p-2 sm:p-2.5 bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded-xl shrink-0">
+                    <i class="fa-solid fa-basket-shopping text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0 flex-grow">
+                    <p id="forgotten-title" class="text-sm sm:text-base font-bold text-slate-800 dark:text-amber-100 leading-snug"></p>
+                </div>
+            </div>
+
+            <!-- Botão para expandir/recolher a lista de itens -->
+            <button id="btn-toggle-forgotten" type="button" aria-expanded="false" aria-controls="forgotten-list" class="mt-3 w-full sm:w-auto sm:ml-12 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl bg-white border border-amber-200 text-amber-700 text-xs font-bold hover:bg-amber-100 dark:bg-slate-800 dark:border-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/30 transition-colors">
+                <span id="forgotten-toggle-label">Ver itens</span>
+                <i id="forgotten-chevron" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"></i>
+            </button>
+
+            <ul id="forgotten-list" class="hidden flex-col gap-2 mt-3 sm:ml-12"></ul>
+        </div>
+
         <!-- Seletor de Abas de Navegação - EXCLUSIVO MOBILE (lg:hidden) -->
         <div class="flex lg:hidden mb-6 bg-slate-200/50 dark:bg-slate-800 p-1 rounded-2xl transition-colors duration-300" id="mobile-tabs">
             <button id="tab-list" class="flex-1 py-3 text-sm font-bold rounded-xl text-cyan-600 bg-white dark:bg-slate-700 dark:text-white shadow-sm transition-all flex items-center justify-center gap-2">
@@ -700,6 +723,29 @@
             </div>
             <div id="cards-list" class="space-y-2 overflow-y-auto max-h-48 pr-1">
                 <p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Nenhum cartão cadastrado ainda.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- POP-UP DE LEMBRETES: próximo vencimento de parcelas -->
+    <div id="reminders-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-sm rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700 p-4 sm:p-6 relative transform scale-95 transition-transform duration-300 max-h-[calc(100dvh-2rem)] overflow-y-auto">
+            <button id="close-reminders-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors" title="Fechar">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1 pr-10 flex items-center space-x-2">
+                <i class="fa-solid fa-bell text-cyan-600"></i>
+                <span>Próximo Vencimento</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 sm:mb-4 pr-6">Valor a ser pago no próximo dia de vencimento de parcelas.</p>
+
+            <div id="reminders-content"></div>
+
+            <div class="mt-4 flex items-center justify-end gap-3">
+                <button id="btn-reminders-ok" class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-xl transition-colors shadow-md shadow-cyan-200 dark:shadow-none">
+                    Entendi
+                </button>
             </div>
         </div>
     </div>

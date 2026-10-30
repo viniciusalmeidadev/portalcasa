@@ -206,6 +206,8 @@ function initFirebase() {
 
             items = [];
             cards = [];
+            localStorage.removeItem(REMINDERS_SHOWN_KEY); // novo login volta a exibir o pop-up
+            localStorage.removeItem(FORGOTTEN_DISMISSED_KEY); // e o lembrete de itens a comprar
             renderItems();
             updateDashboard();
         }
@@ -769,6 +771,26 @@ function setupEventListeners() {
     const closeExportModalBtn = document.getElementById('close-export-modal');
     closeExportModalBtn.addEventListener('click', hideExportImportModal);
 
+    // Expandir/recolher a lista do lembrete de itens a comprar (inicia recolhido)
+    document.getElementById('btn-toggle-forgotten').addEventListener('click', (e) => {
+        const list = document.getElementById('forgotten-list');
+        const expanded = list.classList.toggle('hidden') === false;
+        list.classList.toggle('flex', expanded);
+        e.currentTarget.setAttribute('aria-expanded', String(expanded));
+        document.getElementById('forgotten-chevron').classList.toggle('rotate-180', expanded);
+        document.getElementById('forgotten-toggle-label').textContent = expanded ? 'Ocultar itens' : 'Ver itens';
+    });
+
+    // Fechar o lembrete de itens a comprar
+    document.getElementById('btn-close-forgotten').addEventListener('click', () => {
+        localStorage.setItem(FORGOTTEN_DISMISSED_KEY, getTodayStr());
+        document.getElementById('forgotten-reminder').classList.add('hidden');
+    });
+
+    // Pop-up de lembretes de vencimentos
+    document.getElementById('close-reminders-modal').addEventListener('click', hideRemindersModal);
+    document.getElementById('btn-reminders-ok').addEventListener('click', hideRemindersModal);
+
     const btnExportBackup = document.getElementById('btn-export-backup');
     btnExportBackup.addEventListener('click', handleExportBackup);
 
@@ -1087,6 +1109,8 @@ function updateDashboard() {
         }
     }
 
+    maybeShowRemindersPopup();
+
     // Show/Hide Clear Bought button
     const clearBoughtBtn = document.getElementById('btn-clear-bought');
     if (boughtItems > 0) {
@@ -1094,7 +1118,78 @@ function updateDashboard() {
     } else {
         clearBoughtBtn.classList.add('hidden');
     }
+
+    renderForgottenItemsReminder();
 }
+
+// Lembrete amigável dos itens que continuam "A comprar" (mais antigos primeiro).
+// Ao fechar, fica oculto pelo resto do dia; volta no dia seguinte ou após novo login.
+const FORGOTTEN_DISMISSED_KEY = 'forgotten_reminder_dismissed';
+
+function getTodayStr() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function renderForgottenItemsReminder() {
+    const box = document.getElementById('forgotten-reminder');
+    if (!box) return;
+
+    if (localStorage.getItem(FORGOTTEN_DISMISSED_KEY) === getTodayStr()) {
+        box.classList.add('hidden');
+        return;
+    }
+
+    const pending = items
+        .filter(item => !item.bought)
+        .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+
+    // Só exibe se houver ao menos um item cadastrado há mais de 7 dias sem ser comprado.
+    // Nesse caso, todos os itens pendentes são listados (mesmo os mais recentes).
+    const limitMs = 7 * 86400000;
+    const hasOldPending = pending.some(item => {
+        const created = item.createdAt ? new Date(item.createdAt) : null;
+        return created && !isNaN(created.getTime()) && (Date.now() - created.getTime()) > limitMs;
+    });
+
+    if (!hasOldPending) {
+        box.classList.add('hidden');
+        return;
+    }
+
+    const total = pending.length;
+
+    document.getElementById('forgotten-title').textContent = total === 1
+        ? 'Ei! Ainda falta comprar 1 item da sua lista'
+        : `Ei! Ainda faltam ${total} itens da sua lista para comprar`;
+
+    // Agrupa por categoria; a ordem segue o item mais antigo de cada categoria
+    const byCategory = new Map();
+    pending.forEach(item => {
+        const category = item.category || 'Outros';
+        if (!byCategory.has(category)) byCategory.set(category, []);
+        byCategory.get(category).push(item);
+    });
+
+    // "Outros" sempre por último; as demais mantêm a ordem do item mais antigo
+    const sortedCategories = Array.from(byCategory.entries())
+        .sort(([a], [b]) => (a === 'Outros') - (b === 'Outros'));
+
+    const rows = sortedCategories.map(([category, categoryItems]) => {
+        const names = categoryItems.map(item => {
+            const qty = parseInt(item.quantity) || 1;
+            return escapeHTML(item.name) + (qty > 1 ? ` (${qty}x)` : '');
+        }).join(', ');
+        return `<li class="rounded-xl bg-white/70 border border-amber-100 px-3 py-2 dark:bg-slate-800/60 dark:border-amber-900/30">
+            <p class="text-xs font-bold text-slate-800 dark:text-amber-100">${getCategoryEmoji(category)} ${escapeHTML(category)}</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5 break-words">${names}</p>
+        </li>`;
+    });
+
+    document.getElementById('forgotten-list').innerHTML = rows.join('');
+    box.classList.remove('hidden');
+}
+
 
 // Add New Item Handler (Cadastro Simplificado - Entra como 'A comprar')
 function handleAddItem(e) {
@@ -1415,6 +1510,115 @@ function handleSaveEdit(e) {
         hideEditModal();
         showToast(`"${name}" atualizado com sucesso!`, 'pen-to-square', 'success');
     }
+}
+
+// ─── POP-UP DE LEMBRETES ─────────────────────────────────────────────────────
+
+// Retorna o próximo dia de vencimento de parcelas (somando todas as parcelas que vencem nesse dia)
+function getNextInstallmentDay() {
+    const today = new Date();
+    const startDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const byDay = new Map();
+
+    items.forEach(item => {
+        const installmentsTotal = parseInt(item.installmentsTotal) || 0;
+        if (!item.bought || !item.isInstallment || installmentsTotal <= 0 || !item.purchaseDate) return;
+
+        const parts = item.purchaseDate.split('-');
+        if (parts.length !== 3) return;
+        const pDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        if (isNaN(pDate.getTime())) return;
+
+        const closingDay = parseInt(item.installmentClosingDay || 28);
+        const dueDay = parseInt(item.installmentDueDay || 10);
+        const totalPrice = (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1);
+        const installmentValue = Math.round((totalPrice / installmentsTotal) * 100) / 100;
+
+        // Mesma regra de fatura usada em calculateInstallmentProgress
+        const billingMonthOffset = (pDate.getDate() < closingDay) ? 0 : 1;
+        const dueAfterClosingOffset = (dueDay <= closingDay) ? 1 : 0;
+        const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
+
+        for (let i = 1; i <= installmentsTotal; i++) {
+            const dueDate = new Date(pDate.getFullYear(), pDate.getMonth() + startMonthOffset + (i - 1), dueDay);
+            // Vencimento no dia atual já é considerado pago
+            if (dueDate <= startDay) continue;
+            const key = dueDate.getTime();
+            if (!byDay.has(key)) {
+                byDay.set(key, {
+                    dueDate,
+                    value: 0,
+                    descriptions: [],
+                    daysLeft: Math.round((dueDate - startDay) / 86400000)
+                });
+            }
+            const day = byDay.get(key);
+            day.value += installmentValue;
+            day.descriptions.push({ label: `${item.name} (${i}/${installmentsTotal})`, value: installmentValue });
+            // As parcelas de um item são crescentes: só a próxima de cada item interessa
+            break;
+        }
+    });
+
+    return Array.from(byDay.values()).sort((a, b) => a.dueDate - b.dueDate)[0] || null;
+}
+
+// Mostra o pop-up no máximo uma vez por dia. A marca é apagada no logout,
+// então um novo login volta a exibir o pop-up.
+const REMINDERS_SHOWN_KEY = 'reminders_last_shown';
+
+function maybeShowRemindersPopup() {
+    if (items.length === 0) return;
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (localStorage.getItem(REMINDERS_SHOWN_KEY) === todayStr) return;
+
+    const next = getNextInstallmentDay();
+    if (!next) return;
+    localStorage.setItem(REMINDERS_SHOWN_KEY, todayStr);
+
+    const urgent = next.daysLeft <= 7;
+    const valueClass = 'text-rose-600 dark:text-rose-400';
+    const badgeClass = urgent
+        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+        : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300';
+    const daysText = next.daysLeft === 1 ? 'Amanhã' : `Em ${next.daysLeft} dias`;
+    const count = next.descriptions.length;
+    const weekday = next.dueDate.toLocaleDateString('pt-BR', { weekday: 'long' });
+    const content = document.getElementById('reminders-content');
+    content.className = 'rounded-2xl border px-3 py-4 sm:px-4 sm:py-5 text-center ' + (urgent
+        ? 'border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-900/20'
+        : 'border-cyan-100 bg-cyan-50/60 dark:border-cyan-900/40 dark:bg-cyan-900/10');
+    content.innerHTML = `
+        <span class="inline-block px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold uppercase tracking-wide ${badgeClass}">${daysText}</span>
+        <p class="text-base sm:text-lg font-extrabold text-slate-800 dark:text-white mt-2 sm:mt-3 leading-tight">${next.dueDate.toLocaleDateString('pt-BR')}</p>
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 capitalize">${weekday}</p>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-3 sm:mt-4">Valor a pagar</p>
+        <p class="text-3xl min-[400px]:text-4xl font-extrabold leading-tight break-words ${valueClass}">${formatCurrency(Math.round(next.value * 100) / 100)}</p>
+        <div class="mt-3 sm:mt-4 pt-3 border-t border-slate-200/70 dark:border-slate-600/50 text-left">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">${count} ${count === 1 ? 'parcela' : 'parcelas'}</p>
+            <ul class="space-y-1.5 max-h-32 sm:max-h-40 overflow-y-auto pr-1">
+                ${next.descriptions.map(d => `<li class="flex items-start justify-between gap-3 text-xs">
+                    <span class="font-semibold text-slate-700 dark:text-slate-200 min-w-0 break-words">${escapeHTML(d.label)}</span>
+                    <span class="font-bold text-slate-500 dark:text-slate-400 flex-shrink-0 whitespace-nowrap">${formatCurrency(d.value)}</span>
+                </li>`).join('')}
+            </ul>
+        </div>`;
+
+    const modal = document.getElementById('reminders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.add('modal-active');
+    }, 10);
+}
+
+function hideRemindersModal() {
+    const modal = document.getElementById('reminders-modal');
+    modal.classList.remove('modal-active');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 // Export/Import Modal Controllers

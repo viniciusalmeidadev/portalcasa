@@ -1,3 +1,4 @@
+// teste
 // State Management
 let items = [];
 let cards = []; // Cartões cadastrados

@@ -4,6 +4,10 @@ let items = [];
 let currentCategoryFilter = 'all';
 let currentYearFilter = 'all';
 let currentTimelineView = 'monthly'; // Pode ser 'monthly', 'yearly', 'total'
+let currentDueDayFilter = 'all';
+let currentDueMonthFilter = 'all';
+let currentDueCategoryFilter = 'all';
+let isDueLegendExpanded = false;
 
 // Firebase Configuration & State (Must match app.js)
   const firebaseConfig = {
@@ -162,9 +166,16 @@ function setupFilters() {
             currentCategoryFilter = 'all';
             currentYearFilter = 'all';
             currentTimelineView = 'monthly';
+            currentDueDayFilter = 'all';
+            currentDueMonthFilter = 'all';
+            currentDueCategoryFilter = 'all';
             categorySelect.value = 'all';
             yearSelect.value = 'all';
             
+            const dueDaySelect = document.getElementById('due-filter-day');
+            if (dueDaySelect) dueDaySelect.value = 'all';
+            updateDueDateFilterOptions();
+
             // Restaura o seletor visual de linha do tempo para 'Mensal'
             if (viewSelectorContainer) {
                 viewSelectorContainer.querySelectorAll('button').forEach(btn => {
@@ -177,6 +188,157 @@ function setupFilters() {
 
             renderDashboard();
         });
+    }
+
+    // Configura e popula filtros específicos do Painel de Vencimento
+    setupDueDatePanelFilters();
+}
+
+// Configura os listeners dos filtros do Painel de Gastos por Dia de Vencimento
+function setupDueDatePanelFilters() {
+    const dueDaySelect = document.getElementById('due-filter-day');
+    const dueMonthSelect = document.getElementById('due-filter-month');
+    const dueCategorySelect = document.getElementById('due-filter-category');
+    const dueBtnReset = document.getElementById('due-btn-reset-filters');
+
+    const allEvents = extractAllInstallmentEvents(items);
+
+    // Popula opções de Dias de Vencimento disponíveis
+    if (dueDaySelect) {
+        const daysSet = new Set();
+        allEvents.forEach(evt => daysSet.add(evt.dueDay));
+        const sortedDays = Array.from(daysSet).sort((a, b) => a - b);
+
+        dueDaySelect.innerHTML = '<option value="all">Todos os Dias</option>';
+        sortedDays.forEach(day => {
+            const opt = document.createElement('option');
+            opt.value = day.toString();
+            opt.textContent = `Dia ${String(day).padStart(2, '0')}`;
+            dueDaySelect.appendChild(opt);
+        });
+
+        dueDaySelect.value = currentDueDayFilter;
+
+        dueDaySelect.onchange = (e) => {
+            currentDueDayFilter = e.target.value;
+            // Filtra dinamicamente as opções de Mês e Categoria apenas para o dia selecionado
+            updateDueDateFilterOptions();
+            renderDueDatePanel();
+        };
+    }
+
+    // Configura listeners de alteração de mês e categoria
+    if (dueMonthSelect) {
+        dueMonthSelect.onchange = (e) => {
+            currentDueMonthFilter = e.target.value;
+            renderDueDatePanel();
+        };
+    }
+
+    if (dueCategorySelect) {
+        dueCategorySelect.onchange = (e) => {
+            currentDueCategoryFilter = e.target.value;
+            renderDueDatePanel();
+        };
+    }
+
+    if (dueBtnReset) {
+        dueBtnReset.onclick = () => {
+            currentDueDayFilter = 'all';
+            currentDueMonthFilter = 'all';
+            currentDueCategoryFilter = 'all';
+            if (dueDaySelect) dueDaySelect.value = 'all';
+            updateDueDateFilterOptions();
+            renderDueDatePanel();
+        };
+    }
+
+    // Popula inicialmente as opções de Mês e Categoria
+    updateDueDateFilterOptions();
+}
+
+// Atualiza dinamicamente as opções dos selects de Mês e Categoria de acordo com o Dia de Vencimento selecionado
+function updateDueDateFilterOptions() {
+    const dueMonthSelect = document.getElementById('due-filter-month');
+    const dueCategorySelect = document.getElementById('due-filter-category');
+
+    const allEvents = extractAllInstallmentEvents(items);
+
+    // Filtra os eventos pelo Dia de Vencimento selecionado
+    const dayFilteredEvents = currentDueDayFilter === 'all'
+        ? allEvents
+        : allEvents.filter(evt => evt.dueDay.toString() === currentDueDayFilter.toString());
+
+    // 1. Popula opções de Mês disponíveis para o dia selecionado
+    if (dueMonthSelect) {
+        const monthsMap = new Map();
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        dayFilteredEvents.forEach(evt => {
+            if (!monthsMap.has(evt.monthKey)) {
+                monthsMap.set(evt.monthKey, {
+                    year: evt.year,
+                    month: evt.month,
+                    label: `${monthNames[evt.month]}/${evt.year}`
+                });
+            }
+        });
+
+        const sortedMonthKeys = Array.from(monthsMap.keys()).sort();
+
+        dueMonthSelect.innerHTML = '<option value="all">Todos os Meses</option>';
+
+        const today = new Date();
+        const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        if (monthsMap.has(currentMonthKey)) {
+            const curOpt = document.createElement('option');
+            curOpt.value = 'current';
+            curOpt.textContent = `Mês Atual (${monthNames[today.getMonth()]}/${today.getFullYear()})`;
+            dueMonthSelect.appendChild(curOpt);
+        }
+
+        sortedMonthKeys.forEach(mKey => {
+            const mInfo = monthsMap.get(mKey);
+            const opt = document.createElement('option');
+            opt.value = mKey;
+            opt.textContent = mInfo.label;
+            dueMonthSelect.appendChild(opt);
+        });
+
+        // Se o mês anteriormente selecionado não existe nas novas opções do dia, reseta para 'all'
+        const isCurrentValid = currentDueMonthFilter === 'current' && monthsMap.has(currentMonthKey);
+        const isSpecificValid = monthsMap.has(currentDueMonthFilter);
+
+        if (currentDueMonthFilter !== 'all' && !isCurrentValid && !isSpecificValid) {
+            currentDueMonthFilter = 'all';
+        }
+
+        dueMonthSelect.value = currentDueMonthFilter;
+    }
+
+    // 2. Popula opções de Categoria disponíveis para o dia selecionado
+    if (dueCategorySelect) {
+        const categoriesSet = new Set();
+        dayFilteredEvents.forEach(evt => {
+            if (evt.category) categoriesSet.add(evt.category);
+        });
+
+        const sortedCategories = Array.from(categoriesSet).sort();
+
+        dueCategorySelect.innerHTML = '<option value="all">Todas as Categorias</option>';
+        sortedCategories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            dueCategorySelect.appendChild(opt);
+        });
+
+        // Se a categoria anteriormente selecionada não existe nas novas opções do dia, reseta para 'all'
+        if (currentDueCategoryFilter !== 'all' && !categoriesSet.has(currentDueCategoryFilter)) {
+            currentDueCategoryFilter = 'all';
+        }
+
+        dueCategorySelect.value = currentDueCategoryFilter;
     }
 }
 
@@ -913,6 +1075,541 @@ function renderDashboard() {
             }
         }
     });
+
+    // 6. Renderizar Painel de Gastos por Dia de Vencimento da Fatura
+    renderDueDatePanel();
+}
+
+// Extrai e projeta todos os eventos de parcelas/faturas com suas datas e dias de vencimento
+function extractAllInstallmentEvents(itemList) {
+    const events = [];
+    const today = new Date();
+    const compareToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    itemList.forEach(item => {
+        const installmentsTotal = parseInt(item.installmentsTotal) || 0;
+        if (!item.bought || !item.isInstallment || installmentsTotal <= 0 || !item.purchaseDate) {
+            return;
+        }
+
+        const parts = item.purchaseDate.split('-');
+        if (parts.length !== 3) return;
+        const pDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        if (isNaN(pDate.getTime())) return;
+
+        const closingDay = parseInt(item.installmentClosingDay || 28);
+        const dueDay = parseInt(item.installmentDueDay || 10);
+        const price = parseFloat(item.price) || 0;
+        const qty = parseInt(item.quantity) || 1;
+        const totalPrice = price * qty;
+        const installmentValue = Math.round((totalPrice / installmentsTotal) * 100) / 100;
+
+        const purchaseDay = pDate.getDate();
+        const billingMonthOffset = (purchaseDay < closingDay) ? 0 : 1;
+        const dueAfterClosingOffset = (dueDay <= closingDay) ? 1 : 0;
+        const startMonthOffset = billingMonthOffset + dueAfterClosingOffset;
+
+        for (let i = 1; i <= installmentsTotal; i++) {
+            const dueDate = new Date(
+                pDate.getFullYear(),
+                pDate.getMonth() + startMonthOffset + (i - 1),
+                dueDay
+            );
+            const compareDueDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+            const isPaid = compareDueDate <= compareToday;
+
+            let val = installmentValue;
+            if (i === installmentsTotal) {
+                const previousSum = installmentValue * (installmentsTotal - 1);
+                val = Math.round((totalPrice - previousSum) * 100) / 100;
+            }
+
+            const month = dueDate.getMonth();
+            const year = dueDate.getFullYear();
+            const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+            const pDayNum = pDate.getDate();
+            const pMonthNum = pDate.getMonth() + 1;
+            const purchaseDayMonth = `${String(pDayNum).padStart(2, '0')}/${String(pMonthNum).padStart(2, '0')}`;
+
+            events.push({
+                item: item,
+                itemName: item.name || 'Sem nome',
+                category: item.category || 'Outros',
+                dueDay: dueDay,
+                dueDate: dueDate,
+                purchaseDate: pDate,
+                purchaseDateStr: item.purchaseDate,
+                purchaseDay: purchaseDay,
+                purchaseDayMonth: purchaseDayMonth,
+                year: year,
+                month: month,
+                monthKey: monthKey,
+                installmentNumber: i,
+                installmentsTotal: installmentsTotal,
+                value: val,
+                isPaid: isPaid
+            });
+        }
+    });
+
+    return events;
+}
+
+// Renderiza o Painel de Gastos por Dia de Vencimento da Fatura com filtros por mês e categoria
+function renderDueDatePanel() {
+    const emptyState = document.getElementById('due-empty-state');
+    const contentContainer = document.getElementById('due-content-container');
+    const kpiTotal = document.getElementById('due-kpi-total');
+    const kpiPeakDay = document.getElementById('due-kpi-peak-day');
+    const kpiCount = document.getElementById('due-kpi-count');
+    const daysBadge = document.getElementById('due-days-count-badge');
+    const daysList = document.getElementById('due-days-list');
+
+    if (!contentContainer || !emptyState) return;
+
+    // Destrói gráfico anterior do painel de vencimento se existir
+    if (window.dueDateChartInstance && typeof window.dueDateChartInstance.destroy === 'function') {
+        window.dueDateChartInstance.destroy();
+    }
+
+    const allEvents = extractAllInstallmentEvents(items);
+
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+    // Aplica filtros específicos do painel: Dia de Vencimento, Mês e Categoria
+    const filteredEvents = allEvents.filter(evt => {
+        // Filtro por Dia de Vencimento
+        let matchesDay = true;
+        if (currentDueDayFilter !== 'all') {
+            matchesDay = evt.dueDay.toString() === currentDueDayFilter.toString();
+        }
+
+        // Filtro por Mês
+        let matchesMonth = true;
+        if (currentDueMonthFilter === 'current') {
+            matchesMonth = evt.monthKey === currentMonthKey;
+        } else if (currentDueMonthFilter !== 'all') {
+            matchesMonth = evt.monthKey === currentDueMonthFilter;
+        }
+
+        // Filtro por Categoria
+        let matchesCategory = true;
+        if (currentDueCategoryFilter !== 'all') {
+            matchesCategory = evt.category === currentDueCategoryFilter;
+        }
+
+        return matchesDay && matchesMonth && matchesCategory;
+    });
+
+    if (filteredEvents.length === 0) {
+        emptyState.classList.remove('hidden');
+        contentContainer.classList.add('hidden');
+        if (kpiTotal) kpiTotal.textContent = formatCurrency(0);
+        if (kpiPeakDay) kpiPeakDay.textContent = '-';
+        if (kpiCount) kpiCount.textContent = '0 parcelas';
+        if (daysBadge) daysBadge.textContent = '0 dias';
+        if (daysList) daysList.innerHTML = '';
+        return;
+    }
+
+    emptyState.classList.add('hidden');
+    contentContainer.classList.remove('hidden');
+
+    // Agrupa despesas por dia de vencimento (dueDay)
+    const dayMap = new Map();
+    let totalFilterSum = 0;
+
+    filteredEvents.forEach(evt => {
+        totalFilterSum += evt.value;
+        const d = evt.dueDay;
+        if (!dayMap.has(d)) {
+            dayMap.set(d, {
+                dueDay: d,
+                totalValue: 0,
+                paidValue: 0,
+                toPayValue: 0,
+                events: []
+            });
+        }
+        const grp = dayMap.get(d);
+        grp.totalValue += evt.value;
+        if (evt.isPaid) {
+            grp.paidValue += evt.value;
+        } else {
+            grp.toPayValue += evt.value;
+        }
+        grp.events.push(evt);
+    });
+
+    // Ordena os dias de vencimento numericamente (ex: Dia 5, Dia 10, Dia 15, Dia 28)
+    const sortedDays = Array.from(dayMap.values()).sort((a, b) => a.dueDay - b.dueDay);
+
+    // Encontra o dia com a maior concentração de gastos
+    const peakDay = sortedDays.reduce((max, d) => d.totalValue > max.totalValue ? d : max, sortedDays[0]);
+
+    // Atualiza mini KPIs
+    if (kpiTotal) kpiTotal.textContent = formatCurrency(totalFilterSum);
+    if (kpiPeakDay) kpiPeakDay.textContent = `Dia ${String(peakDay.dueDay).padStart(2, '0')} (${formatCurrency(peakDay.totalValue)})`;
+    if (kpiCount) kpiCount.textContent = `${filteredEvents.length} ${filteredEvents.length === 1 ? 'parcela' : 'parcelas'}`;
+    if (daysBadge) daysBadge.textContent = `${sortedDays.length} ${sortedDays.length === 1 ? 'dia' : 'dias'}`;
+
+    // Renderiza Lista de Detalhamento por Dia de Vencimento com Agrupamento por Data de Compra (Dia/Mês)
+    if (daysList) {
+        daysList.innerHTML = sortedDays.map(d => {
+            const dayLabel = `Vencimento Dia ${String(d.dueDay).padStart(2, '0')}`;
+
+            // Agrupa itens do vencimento pela data/mês exata em que a compra foi realizada (ex: 16/10)
+            const pDateMap = new Map();
+            d.events.forEach(evt => {
+                const pKey = evt.purchaseDayMonth || 'Data n/d';
+                if (!pDateMap.has(pKey)) {
+                    pDateMap.set(pKey, {
+                        purchaseDayMonth: pKey,
+                        time: evt.purchaseDate ? evt.purchaseDate.getTime() : 0,
+                        total: 0,
+                        events: []
+                    });
+                }
+                const pGrp = pDateMap.get(pKey);
+                pGrp.total += evt.value;
+                pGrp.events.push(evt);
+            });
+
+            const sortedPDateGroups = Array.from(pDateMap.values()).sort((a, b) => a.time - b.time);
+
+            const purchaseGroupsHtml = sortedPDateGroups.map(pGrp => {
+                const pText = `Compras de ${pGrp.purchaseDayMonth}`;
+
+                const itemsRows = pGrp.events.map(evt => {
+                    const dateVencStr = formatDateObjToBR(evt.dueDate);
+                    const statusBadge = evt.isPaid
+                        ? `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><i class="fa-solid fa-check text-[8px]"></i> Pago</span>`
+                        : `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"><i class="fa-solid fa-clock text-[8px]"></i> A Pagar</span>`;
+
+                    return `
+                        <div class="flex items-center justify-between py-1.5 border-t border-slate-100 dark:border-slate-700/40 first:border-t-0 text-xs gap-2">
+                            <div class="min-w-0 flex-grow">
+                                <p class="font-bold text-slate-700 dark:text-slate-200 truncate">${evt.itemName}</p>
+                                <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 mt-0.5">
+                                    <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">${evt.category}</span>
+                                    <span>Parcela ${evt.installmentNumber}/${evt.installmentsTotal}</span>
+                                    </div>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="font-extrabold text-slate-800 dark:text-white">${formatCurrency(evt.value)}</p>
+                                <div class="mt-0.5">${statusBadge}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-xs mb-2 last:mb-0">
+                        <div class="flex items-center justify-between pb-1.5 mb-1 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-cart-shopping text-[10px] text-cyan-500"></i>
+                                ${pText}
+                            </span>
+                            <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${formatCurrency(pGrp.total)}</span>
+                        </div>
+                        <div class="space-y-0.5">
+                            ${itemsRows}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60 dark:border-slate-600/50">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300 flex items-center justify-center font-black text-xs">
+                                ${d.dueDay}
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-white">${dayLabel}</span>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 ml-1">(${d.events.length} ${d.events.length === 1 ? 'item' : 'itens'})</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block text-[9px]">Fatura Total</span>
+                            <span class="text-sm font-extrabold text-cyan-600 dark:text-cyan-400">${formatCurrency(d.totalValue)}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        ${purchaseGroupsHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Paleta de cores moderna e contrastante para as Datas de Compra
+    const PURCHASE_DAY_PALETTE = [
+        '#06b6d4', // Cyan-500
+        '#6366f1', // Indigo-500
+        '#3b82f6', // Blue-500
+        '#ec4899', // Pink-500
+        '#f59e0b', // Amber-500
+        '#10b981', // Emerald-500
+        '#8b5cf6', // Violet-500
+        '#14b8a6', // Teal-500
+        '#f43f5e', // Rose-500
+        '#84cc16', // Lime-500
+        '#a855f7', // Purple-500
+        '#f97316', // Orange-500
+        '#0284c7', // Sky-600
+        '#d946ef'  // Fuchsia-500
+    ];
+
+    // Coleta todas as datas de compra únicas (Dia/Mês, ex: "16/10") ordenadas cronologicamente
+    const purchaseDateMap = new Map();
+    filteredEvents.forEach(evt => {
+        const key = evt.purchaseDayMonth || 'Data n/d';
+        if (!purchaseDateMap.has(key)) {
+            purchaseDateMap.set(key, {
+                key: key,
+                time: evt.purchaseDate ? evt.purchaseDate.getTime() : 0
+            });
+        }
+    });
+
+    const sortedPurchaseDates = Array.from(purchaseDateMap.values())
+        .sort((a, b) => a.time - b.time)
+        .map(obj => obj.key);
+
+    // Constrói os datasets empilhados do Chart.js: cada dataset é uma Data de Compra (Dia/Mês)
+    const isDark = document.documentElement.classList.contains('dark');
+    const isMobile = window.innerWidth < 640;
+    const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const gridColor = isDark ? '#334155' : '#f1f5f9';
+
+    // Ajusta a largura do contêiner do gráfico para permitir rolagem fluida em mobile se houver muitas colunas
+    const dueChartWrapper = document.getElementById('due-chart-wrapper');
+    if (dueChartWrapper) {
+        const parentWidth = dueChartWrapper.parentElement.clientWidth || 320;
+        let reqWidth = parentWidth;
+        if (isMobile && sortedDays.length > 4) {
+            reqWidth = sortedDays.length * 68;
+        }
+        if (reqWidth > parentWidth) {
+            dueChartWrapper.style.width = `${reqWidth}px`;
+        } else {
+            dueChartWrapper.style.width = '100%';
+        }
+    }
+
+    const ctxDueDate = document.getElementById('dueDateChart');
+    if (!ctxDueDate) return;
+
+    const chartLabels = sortedDays.map(d => `Dia ${String(d.dueDay).padStart(2, '0')}`);
+    const activeBarThickness = isMobile ? (sortedDays.length > 4 ? 22 : 28) : (sortedDays.length > 6 ? undefined : 36);
+
+    const datasets = sortedPurchaseDates.map((pDayMonth, idx) => {
+        const color = PURCHASE_DAY_PALETTE[idx % PURCHASE_DAY_PALETTE.length];
+        const dataArr = sortedDays.map(d => {
+            const dayEvents = d.events.filter(e => e.purchaseDayMonth === pDayMonth);
+            const sum = dayEvents.reduce((acc, e) => acc + e.value, 0);
+            return Math.round(sum * 100) / 100;
+        });
+
+        return {
+            label: `Compra ${pDayMonth}`,
+            purchaseDayMonth: pDayMonth,
+            data: dataArr,
+            backgroundColor: color,
+            borderColor: isDark ? '#1e293b' : '#ffffff',
+            borderWidth: 1.5,
+            borderRadius: 4,
+            barThickness: activeBarThickness
+        };
+    });
+
+    // Se por acaso nenhum evento tiver data informada, gera fallback
+    if (datasets.length === 0) {
+        datasets.push({
+            label: 'Gastos da Fatura',
+            data: sortedDays.map(d => Math.round(d.totalValue * 100) / 100),
+            backgroundColor: '#06b6d4',
+            borderRadius: 6,
+            barThickness: activeBarThickness
+        });
+    }
+
+    // Atualiza a legenda visual com as Datas de Compra (Dia/Mês) abaixo do gráfico com opção de expandir/recolher
+    renderDueChartLegend(sortedPurchaseDates, filteredEvents, PURCHASE_DAY_PALETTE);
+
+    // Plugin inline: desenha o valor total da fatura acima de cada torre empilhada
+    const dueDateTotalLabelsPlugin = {
+        id: 'dueDateTotalLabels',
+        afterDatasetsDraw(chart) {
+            const { ctx, data, scales: { x, y } } = chart;
+            const totals = data.labels.map((_, i) =>
+                chart.data.datasets.reduce((sum, ds) => sum + (ds.data[i] || 0), 0)
+            );
+            ctx.save();
+            ctx.font = isMobile ? 'bold 9px "Plus Jakarta Sans", sans-serif' : 'bold 11px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            totals.forEach((total, i) => {
+                if (total <= 0) return;
+                const xPos = x.getPixelForValue(i);
+                const yPos = y.getPixelForValue(total);
+                ctx.fillText(formatCurrency(total), xPos, yPos - 3);
+            });
+            ctx.restore();
+        }
+    };
+
+    const maxDayTotal = Math.max(...sortedDays.map(d => d.totalValue), 0);
+    const ySuggestedMax = maxDayTotal > 0 ? maxDayTotal * 1.25 : 100;
+
+    window.dueDateChartInstance = new Chart(ctxDueDate.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: datasets
+        },
+        plugins: [dueDateTotalLabelsPlugin],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            if (!tooltipItems.length) return '';
+                            const index = tooltipItems[0].dataIndex;
+                            const dueDayObj = sortedDays[index];
+                            return `Fatura com Vencimento no Dia ${String(dueDayObj.dueDay).padStart(2, '0')}`;
+                        },
+                        label: function(context) {
+                            const value = context.raw || 0;
+                            if (value <= 0) return null;
+                            return ` 📅 ${context.dataset.label}: ${formatCurrency(value)}`;
+                        },
+                        afterBody: function(tooltipItems) {
+                            if (!tooltipItems.length) return [];
+                            const index = tooltipItems[0].dataIndex;
+                            const dueDayObj = sortedDays[index];
+                            const hoveredDataset = tooltipItems[0].dataset;
+                            const pKey = hoveredDataset ? hoveredDataset.purchaseDayMonth : null;
+
+                            const matchingEvents = pKey
+                                ? dueDayObj.events.filter(e => e.purchaseDayMonth === pKey)
+                                : dueDayObj.events;
+
+                            const lines = [''];
+                            if (matchingEvents.length > 0) {
+                                lines.push(`📋 Compras de ${pKey}:`);
+                                matchingEvents.forEach(e => {
+                                    lines.push(` • ${e.itemName} (${e.installmentNumber}/${e.installmentsTotal}): ${formatCurrency(e.value)}`);
+                                });
+                            }
+                            lines.push('');
+                            lines.push(`💰 Total da Fatura (Dia ${dueDayObj.dueDay}): ${formatCurrency(dueDayObj.totalValue)}`);
+                            return lines;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: isMobile ? 10 : 11, weight: 'bold' }
+                    }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    suggestedMax: ySuggestedMax,
+                    grid: { color: gridColor },
+                    ticks: {
+                        callback: value => formatCurrency(value),
+                        font: { size: isMobile ? 9 : 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Renderiza a legenda dinâmica de datas de compra com limite inicial e botão "Ver todos / Recolher"
+function renderDueChartLegend(sortedPurchaseDates, filteredEvents, PURCHASE_DAY_PALETTE) {
+    const legendContainer = document.getElementById('due-chart-legend');
+    if (!legendContainer) return;
+
+    if (!sortedPurchaseDates || sortedPurchaseDates.length === 0) {
+        legendContainer.innerHTML = '';
+        return;
+    }
+
+    const LEGEND_LIMIT = 6;
+    const hasOverflow = sortedPurchaseDates.length > LEGEND_LIMIT;
+    const datesToShow = (hasOverflow && !isDueLegendExpanded)
+        ? sortedPurchaseDates.slice(0, LEGEND_LIMIT)
+        : sortedPurchaseDates;
+
+    const badgesHtml = datesToShow.map((pDayMonth) => {
+        const originalIdx = sortedPurchaseDates.indexOf(pDayMonth);
+        const color = PURCHASE_DAY_PALETTE[originalIdx % PURCHASE_DAY_PALETTE.length];
+        const totalForPDate = filteredEvents
+            .filter(e => e.purchaseDayMonth === pDayMonth)
+            .reduce((sum, e) => sum + e.value, 0);
+
+        return `
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+                <span><strong class="text-slate-900 dark:text-white">${pDayMonth}</strong>: <strong>${formatCurrency(totalForPDate)}</strong></span>
+            </div>
+        `;
+    }).join('');
+
+    let toggleBtnHtml = '';
+    if (hasOverflow) {
+        const remainingCount = sortedPurchaseDates.length - LEGEND_LIMIT;
+        if (!isDueLegendExpanded) {
+            toggleBtnHtml = `
+                <button id="due-legend-toggle-btn" class="inline-flex items-center gap-1 px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:hover:bg-cyan-900/60 dark:text-cyan-300 font-bold text-[10px] sm:text-[11px] transition-all cursor-pointer shadow-xs border border-cyan-100 dark:border-cyan-800/40">
+                    <i class="fa-solid fa-chevron-down text-[8px] sm:text-[9px]"></i>
+                    <span>Ver todos (+${remainingCount})</span>
+                </button>
+            `;
+        } else {
+            toggleBtnHtml = `
+                <button id="due-legend-toggle-btn" class="inline-flex items-center gap-1 px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] transition-all cursor-pointer shadow-xs border border-slate-200 dark:border-slate-600">
+                    <i class="fa-solid fa-chevron-up text-[8px] sm:text-[9px]"></i>
+                    <span>Recolher</span>
+                </button>
+            `;
+        }
+    }
+
+    legendContainer.innerHTML = badgesHtml + toggleBtnHtml;
+
+    const toggleBtn = document.getElementById('due-legend-toggle-btn');
+    if (toggleBtn) {
+        toggleBtn.onclick = (e) => {
+            e.preventDefault();
+            isDueLegendExpanded = !isDueLegendExpanded;
+            renderDueChartLegend(sortedPurchaseDates, filteredEvents, PURCHASE_DAY_PALETTE);
+        };
+    }
+}
+
+// Formata objeto Date para DD/MM/AAAA
+function formatDateObjToBR(date) {
+    if (!date || isNaN(date.getTime())) return '';
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
 }
 
 // Destruir instâncias ativas do Chart.js para permitir redesenho limpo
@@ -925,6 +1622,9 @@ function destroyActiveCharts() {
     }
     if (window.timelineChartInstance && typeof window.timelineChartInstance.destroy === 'function') {
         window.timelineChartInstance.destroy();
+    }
+    if (window.dueDateChartInstance && typeof window.dueDateChartInstance.destroy === 'function') {
+        window.dueDateChartInstance.destroy();
     }
 }
 

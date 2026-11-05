@@ -247,6 +247,152 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Painel: Gastos por Dia de Vencimento da Fatura -->
+            <div class="lg:col-span-3 bg-white p-3.5 sm:p-6 rounded-3xl border border-slate-100 shadow-sm dark:bg-slate-800 dark:border-slate-700 transition-colors duration-300" id="due-date-panel">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check text-cyan-500"></i>
+                            <span>Gastos por Dia de Vencimento da Fatura</span>
+                        </h3>
+                        <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">
+                            Acompanhe e preveja os valores das faturas agrupados por cada dia de vencimento.
+                        </p>
+                    </div>
+
+                    <!-- Filtros específicos do Painel: Dia, Mês e Categoria (Otimizado para Mobile e Desktop) -->
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-2 sm:p-2.5 rounded-2xl border border-slate-100 dark:border-slate-700 w-full lg:w-auto">
+                        <div class="grid grid-cols-1 xs:grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <!-- Filtro por Dia de Vencimento -->
+                            <div class="flex items-center space-x-1.5 flex-grow sm:flex-grow-0">
+                                <label for="due-filter-day" class="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <i class="fa-solid fa-calendar-day text-cyan-500 mr-0.5"></i>Dia:
+                                </label>
+                                <div class="relative flex-grow sm:flex-grow-0">
+                                    <select id="due-filter-day" class="w-full sm:w-auto pl-2.5 pr-7 py-1.5 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer">
+                                        <option value="all">Todos os Dias</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 dark:text-slate-500">
+                                        <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtro por Mês da Fatura -->
+                            <div class="flex items-center space-x-1.5 flex-grow sm:flex-grow-0">
+                                <label for="due-filter-month" class="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <i class="fa-regular fa-calendar text-cyan-500 mr-0.5"></i>Mês:
+                                </label>
+                                <div class="relative flex-grow sm:flex-grow-0">
+                                    <select id="due-filter-month" class="w-full sm:w-auto pl-2.5 pr-7 py-1.5 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer">
+                                        <option value="all">Todos os Meses</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 dark:text-slate-500">
+                                        <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtro por Categoria -->
+                            <div class="flex items-center space-x-1.5 flex-grow sm:flex-grow-0">
+                                <label for="due-filter-category" class="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <i class="fa-solid fa-tag text-cyan-500 mr-0.5"></i>Cat:
+                                </label>
+                                <div class="relative flex-grow sm:flex-grow-0">
+                                    <select id="due-filter-category" class="w-full sm:w-auto pl-2.5 pr-7 py-1.5 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 dark:bg-slate-700 dark:border-slate-600 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer">
+                                        <option value="all">Todas</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 dark:text-slate-500">
+                                        <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botão de Reset Rápido do Painel -->
+                        <button id="due-btn-reset-filters" class="p-1.5 text-xs text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors flex items-center justify-center gap-1 sm:ml-auto" title="Restaurar filtros do painel">
+                            <i class="fa-solid fa-rotate-left text-xs"></i>
+                            <span class="xs:hidden text-[10px] font-bold">Limpar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mini KPIs do Painel de Vencimento (Otimizado para Mobile) -->
+                <div class="grid grid-cols-1 xs:grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6" id="due-kpis-container">
+                    <div class="p-3 sm:p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <div class="min-w-0 pr-1">
+                            <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Total no Filtro</p>
+                            <p id="due-kpi-total" class="text-sm xs:text-base sm:text-lg font-bold text-slate-800 dark:text-white truncate">R$ 0,00</p>
+                        </div>
+                        <div class="p-1.5 sm:p-2 bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-xl flex-shrink-0">
+                            <i class="fa-solid fa-file-invoice-dollar text-xs sm:text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="p-3 sm:p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <div class="min-w-0 pr-1">
+                            <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Maior Concentração</p>
+                            <p id="due-kpi-peak-day" class="text-sm xs:text-base sm:text-lg font-bold text-slate-800 dark:text-white truncate">-</p>
+                        </div>
+                        <div class="p-1.5 sm:p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl flex-shrink-0">
+                            <i class="fa-solid fa-bolt text-xs sm:text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="p-3 sm:p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <div class="min-w-0 pr-1">
+                            <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Total de Parcelas</p>
+                            <p id="due-kpi-count" class="text-sm xs:text-base sm:text-lg font-bold text-slate-800 dark:text-white truncate">0 parcelas</p>
+                        </div>
+                        <div class="p-1.5 sm:p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex-shrink-0">
+                            <i class="fa-solid fa-layer-group text-xs sm:text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layout interno do Painel: Gráfico de Vencimento e Detalhamento em Cards por Dia -->
+                <div id="due-content-container" class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+                    <!-- Gráfico de Vencimentos (Colunas por Dia de Vencimento) -->
+                    <div class="lg:col-span-7 flex flex-col justify-between">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 sm:mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-column text-cyan-500"></i>
+                            <span>Comparativo por Dia de Vencimento</span>
+                        </h4>
+                        <!-- Contêiner de rolagem horizontal seguro para telas pequenas -->
+                        <div class="overflow-x-auto scrollbar-thin pb-1" id="due-chart-scroll-container">
+                            <div class="relative h-60 sm:h-72 min-w-full" id="due-chart-wrapper">
+                                <canvas id="dueDateChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Legenda dinâmica dos Dias de Compra que compõem as faturas -->
+                        <div id="due-chart-legend" class="mt-2.5 sm:mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
+                            <!-- Preenchido dinamicamente via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Lista/Cards Detalhados por Dia de Vencimento -->
+                    <div class="lg:col-span-5 flex flex-col">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 sm:mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-list-ul text-cyan-500"></i>
+                                <span>Detalhamento dos Dias</span>
+                            </span>
+                            <span id="due-days-count-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">0 dias</span>
+                        </h4>
+                        <div id="due-days-list" class="space-y-2.5 sm:space-y-3 overflow-y-auto max-h-72 sm:max-h-80 pr-1 scrollbar-thin">
+                            <!-- Preenchido dinamicamente via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State específico do Painel de Vencimento -->
+                <div id="due-empty-state" class="hidden py-10 text-center">
+                    <div class="inline-flex p-3.5 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 rounded-2xl mb-3">
+                        <i class="fa-solid fa-calendar-xmark text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Nenhum gasto encontrado para os filtros selecionados</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">Tente alterar o mês ou a categoria selecionada para visualizar os vencimentos de fatura correspondentes.</p>
+                </div>
+            </div>
         </div>
 
     </main>
